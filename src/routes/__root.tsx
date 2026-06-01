@@ -90,6 +90,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#efe4f3" },
+      { property: "og:title", content: "La Cocina De Yoli — Repostería artesanal" },
+      { name: "twitter:title", content: "La Cocina De Yoli — Repostería artesanal" },
+      { name: "description", content: "La Cocina De Yoli is a website showcasing artisanal homemade pastries with a warm, traditional feel." },
+      { property: "og:description", content: "La Cocina De Yoli is a website showcasing artisanal homemade pastries with a warm, traditional feel." },
+      { name: "twitter:description", content: "La Cocina De Yoli is a website showcasing artisanal homemade pastries with a warm, traditional feel." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/479ea509-2b2a-4b10-b765-41724d007b79/id-preview-e7d30b57--54d75c3c-cd3c-4b84-a508-851976ae6539.lovable.app-1780345070713.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/479ea509-2b2a-4b10-b765-41724d007b79/id-preview-e7d30b57--54d75c3c-cd3c-4b84-a508-851976ae6539.lovable.app-1780345070713.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
