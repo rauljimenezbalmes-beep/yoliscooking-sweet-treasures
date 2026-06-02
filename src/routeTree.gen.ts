@@ -9,15 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PersonalizarPastelRouteImport } from './routes/personalizar-pastel'
 import { Route as MisPastelesRouteImport } from './routes/mis-pasteles'
 import { Route as IndexRouteImport } from './routes/index'
 
-const PersonalizarPastelRoute = PersonalizarPastelRouteImport.update({
-  id: '/personalizar-pastel',
-  path: '/personalizar-pastel',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const MisPastelesRoute = MisPastelesRouteImport.update({
   id: '/mis-pasteles',
   path: '/mis-pasteles',
@@ -32,42 +26,31 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/mis-pasteles': typeof MisPastelesRoute
-  '/personalizar-pastel': typeof PersonalizarPastelRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/mis-pasteles': typeof MisPastelesRoute
-  '/personalizar-pastel': typeof PersonalizarPastelRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/mis-pasteles': typeof MisPastelesRoute
-  '/personalizar-pastel': typeof PersonalizarPastelRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/mis-pasteles' | '/personalizar-pastel'
+  fullPaths: '/' | '/mis-pasteles'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/mis-pasteles' | '/personalizar-pastel'
-  id: '__root__' | '/' | '/mis-pasteles' | '/personalizar-pastel'
+  to: '/' | '/mis-pasteles'
+  id: '__root__' | '/' | '/mis-pasteles'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MisPastelesRoute: typeof MisPastelesRoute
-  PersonalizarPastelRoute: typeof PersonalizarPastelRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/personalizar-pastel': {
-      id: '/personalizar-pastel'
-      path: '/personalizar-pastel'
-      fullPath: '/personalizar-pastel'
-      preLoaderRoute: typeof PersonalizarPastelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/mis-pasteles': {
       id: '/mis-pasteles'
       path: '/mis-pasteles'
@@ -88,8 +71,17 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MisPastelesRoute: MisPastelesRoute,
-  PersonalizarPastelRoute: PersonalizarPastelRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

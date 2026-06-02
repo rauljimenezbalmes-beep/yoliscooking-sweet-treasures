@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Cake, Sparkles } from "lucide-react";
+import { Cake, Settings } from "lucide-react";
 
 export function SiteHeader() {
   return (
@@ -31,13 +31,13 @@ export function SiteHeader() {
             Mis Pasteles
           </Link>
           <Link
-            to="/personalizar-pastel"
+            to="/admin/pasteles"
             activeProps={{ className: "bg-primary/90" }}
             className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-primary-foreground shadow-card transition-all hover:-translate-y-0.5 hover:shadow-soft"
           >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Personaliza tu pastel</span>
-            <span className="sm:hidden">Personalizar</span>
+            <Settings className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Gestionar pasteles</span>
+            <span className="sm:hidden">Admin</span>
           </Link>
         </nav>
       </div>
