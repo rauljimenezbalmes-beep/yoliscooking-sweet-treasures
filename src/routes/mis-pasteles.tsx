@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { categories, products, type Category } from "@/data/products";
+import { categories, type Category, type Product } from "@/data/products";
+import { useProducts } from "@/data/products-store";
 import { ProductCard } from "@/components/ProductCard";
 
 export const Route = createFileRoute("/mis-pasteles")({
@@ -27,23 +28,26 @@ export const Route = createFileRoute("/mis-pasteles")({
 });
 
 function MisPasteles() {
+  const products = useProducts();
   const [query, setQuery] = useState("");
 
   const filteredByCategory = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const map = new Map<Category, typeof products>();
+    const map = new Map<Category, Product[]>();
     for (const cat of categories) map.set(cat, []);
     for (const p of products) {
+      if (!p.active) continue;
       if (
         !q ||
         p.name.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q)
+        p.category.toLowerCase().includes(q) ||
+        p.tags.some((t) => t.toLowerCase().includes(q))
       ) {
         map.get(p.category)!.push(p);
       }
     }
     return map;
-  }, [query]);
+  }, [products, query]);
 
   const totalMatches = useMemo(
     () => Array.from(filteredByCategory.values()).reduce((s, a) => s + a.length, 0),
@@ -52,7 +56,6 @@ function MisPasteles() {
 
   return (
     <>
-      {/* Header de la página */}
       <section className="bg-gradient-warm">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
           <div className="text-center">
@@ -68,7 +71,6 @@ function MisPasteles() {
             </p>
           </div>
 
-          {/* Buscador */}
           <div className="mx-auto mt-10 max-w-2xl">
             <label htmlFor="buscar" className="sr-only">
               Buscar tu tarta
@@ -98,7 +100,6 @@ function MisPasteles() {
         </div>
       </section>
 
-      {/* Categorías */}
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
         {categories.map((cat) => {
           const items = filteredByCategory.get(cat) ?? [];
