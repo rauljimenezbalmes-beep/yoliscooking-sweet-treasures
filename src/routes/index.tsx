@@ -4,7 +4,7 @@ import yoli1 from "@/assets/yoli-1.jpg";
 import yoli2 from "@/assets/yoli-2.jpg";
 import yoli3 from "@/assets/yoli-3.jpg";
 import yoli4 from "@/assets/yoli-4.jpg";
-import { ArrowRight, Heart } from "lucide-react";
+import { ArrowRight, Heart, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -62,6 +62,13 @@ function Home() {
               >
                 MIS PASTELES
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+              <Link
+                to="/personalizar-pastel"
+                className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-base font-semibold text-primary-foreground shadow-card transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-soft"
+              >
+                <Sparkles className="h-4 w-4" />
+                Personaliza tu pastel
               </Link>
               <a
                 href="#historia"

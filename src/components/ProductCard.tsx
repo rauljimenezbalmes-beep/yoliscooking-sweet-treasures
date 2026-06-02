@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+import { Sparkles } from "lucide-react";
 import type { Product } from "@/data/products";
 
 export function ProductCard({ product }: { product: Product }) {
@@ -18,12 +20,21 @@ export function ProductCard({ product }: { product: Product }) {
         <p className="flex-1 text-sm leading-relaxed text-muted-foreground">
           {product.description}
         </p>
-        <button
-          type="button"
-          className="mt-2 inline-flex items-center justify-center self-start rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        >
-          Ver detalles
-        </button>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            Ver detalles
+          </button>
+          <Link
+            to="/personalizar-pastel"
+            className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/90"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Personalizar
+          </Link>
+        </div>
       </div>
     </article>
   );
