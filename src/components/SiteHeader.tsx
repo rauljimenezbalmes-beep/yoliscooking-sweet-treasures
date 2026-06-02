@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Cake } from "lucide-react";
+import { Cake, Sparkles } from "lucide-react";
 
 export function SiteHeader() {
   return (
@@ -19,7 +19,7 @@ export function SiteHeader() {
             to="/"
             activeOptions={{ exact: true }}
             activeProps={{ className: "text-foreground bg-muted" }}
-            className="rounded-full px-4 py-2 text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
+            className="hidden rounded-full px-4 py-2 text-muted-foreground transition-colors hover:text-foreground hover:bg-muted sm:inline-flex"
           >
             Inicio
           </Link>
@@ -29,6 +29,15 @@ export function SiteHeader() {
             className="rounded-full px-4 py-2 text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
           >
             Mis Pasteles
+          </Link>
+          <Link
+            to="/personalizar-pastel"
+            activeProps={{ className: "bg-primary/90" }}
+            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-primary-foreground shadow-card transition-all hover:-translate-y-0.5 hover:shadow-soft"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Personaliza tu pastel</span>
+            <span className="sm:hidden">Personalizar</span>
           </Link>
         </nav>
       </div>
