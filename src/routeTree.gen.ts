@@ -10,8 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MisPastelesRouteImport } from './routes/mis-pasteles'
+import { Route as CarritoRouteImport } from './routes/carrito'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PastelesIdRouteImport } from './routes/pasteles.$id'
 import { Route as AdminPastelesIndexRouteImport } from './routes/admin.pasteles.index'
+import { Route as PastelesIdPersonalizarRouteImport } from './routes/pasteles.$id.personalizar'
 import { Route as AdminPastelesIdRouteImport } from './routes/admin.pasteles.$id'
 
 const MisPastelesRoute = MisPastelesRouteImport.update({
@@ -19,15 +22,30 @@ const MisPastelesRoute = MisPastelesRouteImport.update({
   path: '/mis-pasteles',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CarritoRoute = CarritoRouteImport.update({
+  id: '/carrito',
+  path: '/carrito',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PastelesIdRoute = PastelesIdRouteImport.update({
+  id: '/pasteles/$id',
+  path: '/pasteles/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminPastelesIndexRoute = AdminPastelesIndexRouteImport.update({
   id: '/admin/pasteles/',
   path: '/admin/pasteles/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PastelesIdPersonalizarRoute = PastelesIdPersonalizarRouteImport.update({
+  id: '/personalizar',
+  path: '/personalizar',
+  getParentRoute: () => PastelesIdRoute,
 } as any)
 const AdminPastelesIdRoute = AdminPastelesIdRouteImport.update({
   id: '/admin/pasteles/$id',
@@ -37,39 +55,67 @@ const AdminPastelesIdRoute = AdminPastelesIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/carrito': typeof CarritoRoute
   '/mis-pasteles': typeof MisPastelesRoute
+  '/pasteles/$id': typeof PastelesIdRouteWithChildren
   '/admin/pasteles/$id': typeof AdminPastelesIdRoute
+  '/pasteles/$id/personalizar': typeof PastelesIdPersonalizarRoute
   '/admin/pasteles/': typeof AdminPastelesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/carrito': typeof CarritoRoute
   '/mis-pasteles': typeof MisPastelesRoute
+  '/pasteles/$id': typeof PastelesIdRouteWithChildren
   '/admin/pasteles/$id': typeof AdminPastelesIdRoute
+  '/pasteles/$id/personalizar': typeof PastelesIdPersonalizarRoute
   '/admin/pasteles': typeof AdminPastelesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/carrito': typeof CarritoRoute
   '/mis-pasteles': typeof MisPastelesRoute
+  '/pasteles/$id': typeof PastelesIdRouteWithChildren
   '/admin/pasteles/$id': typeof AdminPastelesIdRoute
+  '/pasteles/$id/personalizar': typeof PastelesIdPersonalizarRoute
   '/admin/pasteles/': typeof AdminPastelesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/mis-pasteles' | '/admin/pasteles/$id' | '/admin/pasteles/'
+  fullPaths:
+    | '/'
+    | '/carrito'
+    | '/mis-pasteles'
+    | '/pasteles/$id'
+    | '/admin/pasteles/$id'
+    | '/pasteles/$id/personalizar'
+    | '/admin/pasteles/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/mis-pasteles' | '/admin/pasteles/$id' | '/admin/pasteles'
+  to:
+    | '/'
+    | '/carrito'
+    | '/mis-pasteles'
+    | '/pasteles/$id'
+    | '/admin/pasteles/$id'
+    | '/pasteles/$id/personalizar'
+    | '/admin/pasteles'
   id:
     | '__root__'
     | '/'
+    | '/carrito'
     | '/mis-pasteles'
+    | '/pasteles/$id'
     | '/admin/pasteles/$id'
+    | '/pasteles/$id/personalizar'
     | '/admin/pasteles/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CarritoRoute: typeof CarritoRoute
   MisPastelesRoute: typeof MisPastelesRoute
+  PastelesIdRoute: typeof PastelesIdRouteWithChildren
   AdminPastelesIdRoute: typeof AdminPastelesIdRoute
   AdminPastelesIndexRoute: typeof AdminPastelesIndexRoute
 }
@@ -83,11 +129,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MisPastelesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/carrito': {
+      id: '/carrito'
+      path: '/carrito'
+      fullPath: '/carrito'
+      preLoaderRoute: typeof CarritoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pasteles/$id': {
+      id: '/pasteles/$id'
+      path: '/pasteles/$id'
+      fullPath: '/pasteles/$id'
+      preLoaderRoute: typeof PastelesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/pasteles/': {
@@ -96,6 +156,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/pasteles/'
       preLoaderRoute: typeof AdminPastelesIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/pasteles/$id/personalizar': {
+      id: '/pasteles/$id/personalizar'
+      path: '/personalizar'
+      fullPath: '/pasteles/$id/personalizar'
+      preLoaderRoute: typeof PastelesIdPersonalizarRouteImport
+      parentRoute: typeof PastelesIdRoute
     }
     '/admin/pasteles/$id': {
       id: '/admin/pasteles/$id'
@@ -107,22 +174,26 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface PastelesIdRouteChildren {
+  PastelesIdPersonalizarRoute: typeof PastelesIdPersonalizarRoute
+}
+
+const PastelesIdRouteChildren: PastelesIdRouteChildren = {
+  PastelesIdPersonalizarRoute: PastelesIdPersonalizarRoute,
+}
+
+const PastelesIdRouteWithChildren = PastelesIdRoute._addFileChildren(
+  PastelesIdRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CarritoRoute: CarritoRoute,
   MisPastelesRoute: MisPastelesRoute,
+  PastelesIdRoute: PastelesIdRouteWithChildren,
   AdminPastelesIdRoute: AdminPastelesIdRoute,
   AdminPastelesIndexRoute: AdminPastelesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

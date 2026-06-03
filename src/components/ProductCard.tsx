@@ -1,11 +1,16 @@
 import { Link } from "@tanstack/react-router";
-import { Pencil } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { Product } from "@/data/products";
 
 export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl bg-card shadow-card ring-1 ring-border/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-soft">
-      <div className="relative aspect-square overflow-hidden bg-muted">
+      <Link
+        to="/pasteles/$id"
+        params={{ id: product.id }}
+        className="relative aspect-square overflow-hidden bg-muted"
+        aria-label={`Ver ${product.name}`}
+      >
         <img
           src={product.image}
           alt={product.name}
@@ -19,10 +24,18 @@ export function ProductCard({ product }: { product: Product }) {
             No disponible
           </span>
         )}
-      </div>
+      </Link>
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-display text-xl text-foreground">{product.name}</h3>
+          <h3 className="font-display text-xl text-foreground">
+            <Link
+              to="/pasteles/$id"
+              params={{ id: product.id }}
+              className="transition-colors hover:text-primary"
+            >
+              {product.name}
+            </Link>
+          </h3>
           <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
             {product.price.toFixed(2)} €
           </span>
@@ -32,12 +45,12 @@ export function ProductCard({ product }: { product: Product }) {
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <Link
-            to="/admin/pasteles/$id"
+            to="/pasteles/$id"
             params={{ id: product.id }}
             className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/90"
           >
-            <Pencil className="h-3.5 w-3.5" />
-            Editar
+            Ver pastel
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       </div>
