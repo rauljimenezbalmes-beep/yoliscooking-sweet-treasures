@@ -103,21 +103,6 @@ function CakeDetailPage() {
             </ul>
           </div>
 
-          {product.ingredients.length > 0 && (
-            <div className="mt-6">
-              <h2 className="font-display text-lg text-foreground">Ingredientes principales</h2>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {product.ingredients.map((ing) => (
-                  <span
-                    key={ing}
-                    className="rounded-full bg-muted px-3 py-1 text-xs text-foreground/80"
-                  >
-                    {ing}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
 
           <div className="mt-8">
             <Link
