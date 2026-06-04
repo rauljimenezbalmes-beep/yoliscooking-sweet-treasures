@@ -1,152 +1,91 @@
 ## Objetivo
 
-Añadir un configurador de pasteles para el **cliente final** como capa adicional sobre cada producto. El catálogo actual (`/mis-pasteles`) y la home se mantienen intactos: misma cuadrícula, imagen, nombre, precio, descripción.
+Transformar `/pasteles/$id/personalizar` (hoy una sola página con todas las secciones apiladas) en un **wizard paso a paso** tipo e-commerce premium, empezando por el **Paso 1: Sabores** completamente pulido y dejando preparada la estructura para los siguientes pasos.
 
-## Principio clave
+## Comportamiento del botón "Personalizar mi pastel"
 
-- **No se elimina ni reemplaza nada** del catálogo.
-- La personalización vive en rutas nuevas por producto: `/pasteles/$id` (detalle) y `/pasteles/$id/personalizar` (configurador).
-- Cada item del carrito guarda su propia configuración independiente.
+Sin cambios en la ficha del producto: el botón ya navega a `/pasteles/$id/personalizar`. Solo se rehace lo que se ve dentro de esa página.
 
-## Cambios mínimos en lo existente
-
-- `src/components/ProductCard.tsx`: el botón actual "Editar" (admin) se reemplaza por **"Ver pastel"** que enlaza a `/pasteles/$id`. La tarjeta entera también es clicable. Imagen, nombre, precio y descripción se mantienen exactamente igual.
-- `src/components/SiteHeader.tsx`: añadir icono de **carrito** con badge de cantidad. Quitar el enlace "Gestionar pasteles" del nav público (la ruta `/admin/pasteles` sigue existiendo, sólo deja de promocionarse).
-- Home (`src/routes/index.tsx`) y `/mis-pasteles`: sin cambios estructurales — solo el destino del botón de la tarjeta cambia.
-
-## Rutas nuevas
+## Estructura nueva de la página
 
 ```
-/pasteles/$id              → Detalle del pastel
-/pasteles/$id/personalizar → Configurador
-/carrito                   → Resumen del carrito
+┌─────────────────────────────────────────────┐
+│  ← Volver       [Red Velvet]    🛒          │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 20%      │
+│  ① Sabores  ② Relleno  ③ Decor.  ④ Texto …  │
+├─────────────────────────────────────────────┤
+│                                             │
+│   Paso actual (tarjetas grandes, hover,     │
+│   estado seleccionado, icono ✓)             │
+│                                             │
+├─────────────────────────────────────────────┤
+│  [← Atrás]                    [Continuar →] │
+└─────────────────────────────────────────────┘
 ```
 
-Archivos:
-- `src/routes/pasteles.$id.tsx`
-- `src/routes/pasteles.$id.personalizar.tsx`
-- `src/routes/carrito.tsx`
+- **Header sticky**: nombre del pastel + miniatura + barra de progreso con `%` y lista visual de pasos (el actual destacado, los completados con check, los futuros atenuados).
+- **Un solo paso visible a la vez** con transición suave (fade + slide).
+- **Footer sticky** con botones "Atrás" y "Continuar". "Continuar" deshabilitado hasta cumplir la validación del paso.
+- **Responsive**: en móvil los pasos se compactan a "Paso 1 de 5 · Sabores" + barra; en escritorio se ven todos los nombres.
 
-### Página de detalle `/pasteles/$id`
+## Pasos definidos
 
-Muestra solo ESE pastel:
-- Imagen grande
-- Nombre, descripción larga, precio base
-- Tamaños disponibles con porciones y precio orientativo
-- Alérgenos (derivados de `ingredients`)
-- Tiempo estimado de entrega (mínimo 3 días)
-- CTA destacado: **"Personalizar mi pastel"** → `/pasteles/$id/personalizar`
-- Link "Volver al catálogo"
+| # | Paso | Estado en esta entrega |
+|---|------|-----------------------|
+| 1 | Sabores | Implementado completo |
+| 2 | Relleno | Placeholder "Próximamente" navegable |
+| 3 | Decoración | Placeholder |
+| 4 | Texto personalizado | Placeholder |
+| 5 | Resumen + añadir al carrito | Placeholder con CTA final |
 
-### Configurador `/pasteles/$id/personalizar`
+Los placeholders permiten Atrás/Continuar para que la barra de progreso y la navegación se vean reales hoy y se rellenen sin refactor mañana.
 
-Una sola página, secciones apiladas con barra de progreso sticky (mejor UX móvil que un wizard de 10 pantallas). Resumen lateral sticky en desktop, barra inferior fija en móvil con total + CTA.
+## Paso 1: Sabores (especificación)
 
-Secciones (validación con Zod, cada una desbloquea la siguiente):
+- Título "Elige uno o dos sabores" + subtítulo "Selecciona hasta 2 sabores para el interior".
+- **Tarjetas seleccionables** (no chips) en grid responsive (2 col móvil, 3 col tablet, 4 col desktop):
+  - Borde redondeado `rounded-2xl`, sombra suave, hover `translate-y` + sombra.
+  - Estado seleccionado: borde `primary`, fondo `primary/5`, **icono ✓** en esquina superior derecha.
+  - Si ya hay 2 seleccionados, las demás tarjetas se atenúan (opacidad 50%) y no aceptan click hasta deseleccionar.
+- Contador "1/2 sabores seleccionados".
+- Opciones: Crema pastelera, Yema quemada, Trufa, Chocolate blanco, Nocilla, Crema de pistacho, Crema de lotus, Nata, Crema de naranja (ya existen en `FLAVORS`, solo se renombra "Crema Lotus" → "Crema de lotus").
+- Validación: ≥1 sabor para habilitar "Continuar".
 
-1. **Sabores** (sólo si categoría es `Tartas` o `Bizcochos`) — chips, 1 ó 2 de:
-   Crema pastelera, Yema quemada, Trufa, Chocolate blanco, Nocilla, Crema de pistacho, Crema Lotus, Nata, Crema de naranja.
-2. **Cobertura** (radio único): Sin cobertura, Chocolate negro, Chocolate blanco, Almíbar de naranja, Almíbar de limón, Chocolate con leche.
-3. **Tipo de decoración** — dos tarjetas:
-   - *Clásica* — "La opción perfecta para los amantes de la estética más tradicional donde el protagonista principal es el sabor auténtico."
-   - *Personalizada* — "Crea tu pastel a tu gusto y nosotros lo haremos realidad."
-4. **Colores principales** *(sólo si personalizada)* — paleta predefinida + selector hex, 1 ó 2.
-5. **Temática** *(sólo si personalizada)* — chips: Personajes, Animales, Fantasía, Tecnología, Deportes, Hobbies, Eventos, Estaciones del año.
-6. **Descripción de la idea** *(sólo si personalizada)* — textarea con contador, máx 50 caracteres.
-7. **Tamaño** — tarjetas: Individual, Pequeño, Mediano, Grande, Extra grande (con porciones y precio).
-8. **Fecha de entrega** — Shadcn DatePicker, `disabled={{ before: hoy }}`, mínimo 3 días.
-9. **Resumen + CTA "Pedir mi pastel"** → añade al carrito y navega a `/carrito`.
+## Persistencia del estado
 
-## Modelo de datos
-
-Nuevo `src/data/customization.ts`:
-
-```ts
-export const FLAVORS = [...] as const;
-export const COVERINGS = [...] as const;
-export const THEMES = [...] as const;
-export const SIZES = [
-  { id:'individual', label:'Individual',   portions:1,  multiplier:0.4 },
-  { id:'pequeno',    label:'Pequeño',      portions:6,  multiplier:1   },
-  { id:'mediano',    label:'Mediano',      portions:10, multiplier:1.5 },
-  { id:'grande',     label:'Grande',       portions:16, multiplier:2.2 },
-  { id:'xl',         label:'Extra grande', portions:24, multiplier:3   },
-] as const;
-export const CUSTOM_DECORATION_FEE = 8; // €
-
-export interface CakeCustomization {
-  productId: string;
-  flavors: string[];               // 0–2 (0 si "Tartas de Época")
-  covering: string;
-  decoration: 'clasica' | 'personalizada';
-  colors?: string[];               // 1–2
-  theme?: string;
-  description?: string;            // ≤ 50
-  sizeId: string;
-  deliveryDate: string;            // ISO
-}
-```
-
-## Precio dinámico
-
-```
-precio = producto.price * size.multiplier
-       + (decoration === 'personalizada' ? CUSTOM_DECORATION_FEE : 0)
-```
-
-Se recalcula en tiempo real y se muestra en el resumen y junto al CTA.
-
-## Carrito
-
-Nuevo `src/data/cart-store.ts` (mismo patrón que `products-store.ts`: `useSyncExternalStore` + `localStorage`, clave `yoli.cart.v1`):
-
-```ts
-interface CartItem {
-  id: string;            // uuid local
-  customization: CakeCustomization;
-  price: number;
-  addedAt: number;
-}
-addToCart, removeFromCart, clearCart, useCart, useCartCount
-```
-
-Cada configuración se guarda como item independiente — el mismo pastel puede entrar varias veces con distintas personalizaciones.
-
-Página `/carrito`: lista de items con resumen completo (sabores, cobertura, decoración, colores, temática, descripción, tamaño, fecha), botón eliminar, total, CTA "Continuar al pago" (placeholder con toast; queda preparado para Stripe + Lovable Cloud en futuro).
+- Crear `src/context/CustomizationContext.tsx` con `CustomizationProvider` + hook `useCustomization()`.
+- El estado vive a nivel del componente de ruta (`PersonalizarPage`) y se expone vía contexto a los componentes de cada paso. Así cada paso lee/escribe sin prop drilling y al volver atrás conserva la selección.
+- Se mantiene el tipo `CakeCustomization` actual de `src/data/customization.ts` (no se rompe el contrato con el carrito).
+- No se persiste en localStorage en esta iteración (la sesión vive en memoria mientras dura el wizard).
 
 ## Componentes nuevos
 
 ```
 src/components/customization/
-  ProgressBar.tsx
-  StepFlavors.tsx
-  StepCovering.tsx
-  StepDecoration.tsx
-  StepColors.tsx
-  StepTheme.tsx
-  StepDescription.tsx
-  StepSize.tsx
-  StepDelivery.tsx
-  OrderSummary.tsx        (sticky desktop / barra inferior móvil)
-src/components/CartIcon.tsx
-src/components/CakeDetail.tsx
+  WizardLayout.tsx        ← header sticky + barra + footer Atrás/Continuar
+  WizardProgress.tsx      ← barra + lista de pasos (responsive)
+  WizardFooter.tsx        ← botones Atrás/Continuar
+  steps/
+    StepFlavors.tsx       ← Paso 1 completo
+    StepFilling.tsx       ← placeholder
+    StepDecoration.tsx    ← placeholder
+    StepText.tsx          ← placeholder
+    StepSummary.tsx       ← placeholder con CTA final (reutiliza addToCart)
+  SelectableCard.tsx      ← tarjeta reutilizable con check, hover y selected
 ```
 
-Shadcn ya disponibles: `calendar`, `popover`, `button`, `textarea`, `card`, `badge`. Si falta `checkbox`, se instala.
+## Cambios en archivos existentes
 
-## SEO
+- `src/routes/pasteles.$id.personalizar.tsx`: se reescribe el cuerpo del componente para usar `WizardLayout` + estado del paso actual (`useState<number>(1)`) + render condicional del componente de paso. Se conserva la lógica de `addToCart` y `computePrice` actual, movida al `StepSummary`. **No se cambia la ruta ni el contrato externo.**
+- `src/data/customization.ts`: renombrar `"Crema Lotus"` → `"Crema de lotus"` para alinear con la lista pedida. Resto intacto.
 
-- `/pasteles/$id`: title `"{nombre} — La Cocina De Yoli"`, og:image = imagen del producto.
-- `/pasteles/$id/personalizar`: title `"Personaliza tu {nombre}"`, meta description con el flujo.
-- `/carrito`: noindex.
+## Fuera de alcance (siguiente iteración)
 
-## Responsive
+Los pasos 2–5 quedan como placeholders funcionales (con su propio header y botón Continuar). La lógica detallada de relleno, cobertura, decoración personalizada (colores/temática/descripción), tamaño, fecha de entrega y subida de imágenes se migrará paso a paso reutilizando lo que ya está en el archivo actual y los datos de `customization.ts`.
 
-- Móvil: secciones a ancho completo, resumen en barra inferior fija con total + CTA.
-- Desktop: layout 2 columnas (configurador 2/3, resumen sticky 1/3).
+## Riesgos / no se toca
 
-## Fuera de alcance (futuro)
-
-- Pago real (Stripe + Lovable Cloud).
-- Persistencia en backend y datos del cliente (nombre, teléfono, dirección).
-- Edición de un item ya en el carrito (por ahora se elimina y se vuelve a crear).
+- El catálogo (`/mis-pasteles`, `index.tsx`, `ProductCard`) no se modifica.
+- La ficha de producto `/pasteles/$id` no se modifica.
+- El carrito (`/carrito`, `cart-store.ts`) no se modifica.
+- `routeTree.gen.ts` no se edita a mano.
