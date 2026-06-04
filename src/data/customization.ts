@@ -5,7 +5,7 @@ export const FLAVORS = [
   "Chocolate blanco",
   "Nocilla",
   "Crema de pistacho",
-  "Crema Lotus",
+  "Crema de lotus",
   "Nata",
   "Crema de naranja",
 ] as const;
