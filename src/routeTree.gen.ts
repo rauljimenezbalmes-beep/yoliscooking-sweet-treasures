@@ -43,9 +43,9 @@ const AdminPastelesIndexRoute = AdminPastelesIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const PastelesIdPersonalizarRoute = PastelesIdPersonalizarRouteImport.update({
-  id: '/personalizar',
-  path: '/personalizar',
-  getParentRoute: () => PastelesIdRoute,
+  id: '/pasteles/$id/personalizar',
+  path: '/pasteles/$id/personalizar',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminPastelesIdRoute = AdminPastelesIdRouteImport.update({
   id: '/admin/pasteles/$id',
@@ -116,6 +116,7 @@ export interface RootRouteChildren {
   CarritoRoute: typeof CarritoRoute
   MisPastelesRoute: typeof MisPastelesRoute
   AdminPastelesIdRoute: typeof AdminPastelesIdRoute
+  PastelesIdPersonalizarRoute: typeof PastelesIdPersonalizarRoute
   AdminPastelesIndexRoute: typeof AdminPastelesIndexRoute
   PastelesIdIndexRoute: typeof PastelesIdIndexRoute
 }
@@ -159,10 +160,10 @@ declare module '@tanstack/react-router' {
     }
     '/pasteles/$id/personalizar': {
       id: '/pasteles/$id/personalizar'
-      path: '/personalizar'
+      path: '/pasteles/$id/personalizar'
       fullPath: '/pasteles/$id/personalizar'
       preLoaderRoute: typeof PastelesIdPersonalizarRouteImport
-      parentRoute: typeof PastelesIdRoute
+      parentRoute: typeof rootRouteImport
     }
     '/admin/pasteles/$id': {
       id: '/admin/pasteles/$id'
@@ -179,19 +180,10 @@ const rootRouteChildren: RootRouteChildren = {
   CarritoRoute: CarritoRoute,
   MisPastelesRoute: MisPastelesRoute,
   AdminPastelesIdRoute: AdminPastelesIdRoute,
+  PastelesIdPersonalizarRoute: PastelesIdPersonalizarRoute,
   AdminPastelesIndexRoute: AdminPastelesIndexRoute,
   PastelesIdIndexRoute: PastelesIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
