@@ -3,7 +3,7 @@ import { ArrowLeft, Clock, Sparkles, Wheat } from "lucide-react";
 import { useProduct } from "@/data/products-store";
 import { SIZES, MIN_DELIVERY_DAYS } from "@/data/customization";
 
-export const Route = createFileRoute("/pasteles/$id")({
+export const Route = createFileRoute("/pasteles/$id/")({
   head: ({ params }) => ({
     meta: [
       { title: `${params.id} — La Cocina De Yoli` },
