@@ -65,6 +65,7 @@ function PersonalizarPage() {
   if (!product) throw notFound();
 
   const isBizcocho = product?.category === "Bizcochos";
+  const steps = getSteps(isBizcocho);
 
   // Validation per step
   const stepValid: Record<number, boolean> = {
@@ -75,10 +76,10 @@ function PersonalizarPage() {
     5: true,
   };
   const completed = new Set<number>(
-    STEPS.filter((s) => s.id < current && stepValid[s.id]).map((s) => s.id),
+    steps.filter((s) => s.id < current && stepValid[s.id]).map((s) => s.id),
   );
 
-  const isLast = current === STEPS.length;
+  const isLast = current === steps.length;
 
   function handleNext() {
     if (!stepValid[current]) return;
