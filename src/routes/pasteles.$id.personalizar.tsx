@@ -62,10 +62,12 @@ function PersonalizarPage() {
 
   if (!product) throw notFound();
 
+  const isTarta = product?.category === "Tartas";
+
   // Validation per step
   const stepValid: Record<number, boolean> = {
     1: state.flavors.length >= 1,
-    2: true, // placeholder — always valid
+    2: isTarta ? state.covering !== "" : true,
     3: true,
     4: true,
     5: true,
