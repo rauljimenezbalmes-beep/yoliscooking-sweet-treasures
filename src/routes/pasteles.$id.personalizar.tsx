@@ -62,12 +62,12 @@ function PersonalizarPage() {
 
   if (!product) throw notFound();
 
-  const isTarta = product?.category === "Tartas";
+  const isBizcocho = product?.category === "Bizcochos";
 
   // Validation per step
   const stepValid: Record<number, boolean> = {
     1: state.flavors.length >= 1,
-    2: isTarta ? state.covering !== "" : true,
+    2: isBizcocho ? state.covering !== "" : true,
     3: true,
     4: true,
     5: true,
@@ -160,7 +160,7 @@ function PersonalizarPage() {
         <div key={current} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           {current === 1 && <StepFlavors />}
           {current === 2 && (
-            isTarta ? (
+            isBizcocho ? (
               <StepCovering />
             ) : (
               <StepPlaceholder
