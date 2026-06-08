@@ -149,7 +149,7 @@ function PersonalizarPage() {
           </div>
           <div className="mt-4">
             <WizardProgress
-              steps={STEPS}
+              steps={steps}
               current={current}
               completed={completed}
               onJump={handleJump}
