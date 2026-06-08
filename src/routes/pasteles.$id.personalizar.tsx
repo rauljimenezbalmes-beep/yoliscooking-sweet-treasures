@@ -12,6 +12,7 @@ import {
 import { WizardProgress, type WizardStep } from "@/components/customization/WizardProgress";
 import { WizardFooter } from "@/components/customization/WizardFooter";
 import { StepFlavors } from "@/components/customization/steps/StepFlavors";
+import { StepCovering } from "@/components/customization/steps/StepCovering";
 import { StepPlaceholder } from "@/components/customization/steps/StepPlaceholder";
 
 export const Route = createFileRoute("/pasteles/$id/personalizar")({
