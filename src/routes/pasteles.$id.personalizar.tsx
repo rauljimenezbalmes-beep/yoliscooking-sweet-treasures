@@ -12,6 +12,7 @@ import {
 import { WizardProgress, type WizardStep } from "@/components/customization/WizardProgress";
 import { WizardFooter } from "@/components/customization/WizardFooter";
 import { StepFlavors } from "@/components/customization/steps/StepFlavors";
+import { StepCovering } from "@/components/customization/steps/StepCovering";
 import { StepPlaceholder } from "@/components/customization/steps/StepPlaceholder";
 
 export const Route = createFileRoute("/pasteles/$id/personalizar")({
@@ -61,10 +62,12 @@ function PersonalizarPage() {
 
   if (!product) throw notFound();
 
+  const isTarta = product?.category === "Tartas";
+
   // Validation per step
   const stepValid: Record<number, boolean> = {
     1: state.flavors.length >= 1,
-    2: true, // placeholder — always valid
+    2: isTarta ? state.covering !== "" : true,
     3: true,
     4: true,
     5: true,
@@ -157,10 +160,14 @@ function PersonalizarPage() {
         <div key={current} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           {current === 1 && <StepFlavors />}
           {current === 2 && (
-            <StepPlaceholder
-              title="Relleno"
-              description="Elige el relleno que acompañará a tus sabores."
-            />
+            isTarta ? (
+              <StepCovering />
+            ) : (
+              <StepPlaceholder
+                title="Relleno"
+                description="Elige el relleno que acompañará a tus sabores."
+              />
+            )
           )}
           {current === 3 && (
             <StepPlaceholder
