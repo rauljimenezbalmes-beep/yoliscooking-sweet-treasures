@@ -1,15 +1,22 @@
-## Cambio
+## Objetivo
+Cambiar el texto del paso 2 en el wizard de personalización para que muestre **"Cobertura"** cuando el producto sea de la categoría **Bizcochos**, y mantenga **"Relleno"** para las demás categorías.
 
-Mover el Paso 2 (Cobertura) de **Tartas** a **Bizcochos**.
+## Cambio
 
 ### `src/routes/pasteles.$id.personalizar.tsx`
 
-- Reemplazar `isTarta = product.category === "Tartas"` por `isBizcocho = product.category === "Bizcochos"`.
-- `stepValid[2]`: `isBizcocho ? state.covering !== "" : true`.
-- En el render del paso 2: si `isBizcocho` → `<StepCovering />`; en caso contrario (Tartas y Tartas de Época) → `<StepPlaceholder title="Relleno" ... />`.
+- Actualmente `STEPS` es una constante estática:
+  ```tsx
+  const STEPS: WizardStep[] = [
+    { id: 1, label: "Sabores" },
+    { id: 2, label: "Relleno" },
+    { id: 3, label: "Decoración" },
+    { id: 4, label: "Texto" },
+    { id: 5, label: "Resumen" },
+  ];
+  ```
+- Convertir `STEPS` en una función `getSteps(isBizcocho: boolean): WizardStep[]` que devuelva el mismo array pero con el paso 2 como `"Cobertura"` si `isBizcocho` es `true`, o `"Relleno"` si es `false`.
+- En `PersonalizarPage`, usar `const steps = getSteps(isBizcocho)` y pasar `steps` en lugar de `STEPS` al componente `WizardProgress`.
 
-### Fuera de alcance
-
-- No se toca `StepCovering.tsx` ni `COVERINGS` (mismas 6 opciones).
-- No se modifican otros pasos, precios ni catálogo.
-- Tartas y Tartas de Época mantienen el placeholder "Próximamente" en el Paso 2.
+## Fuera de alcance
+- No se modifica la lógica de validación (`stepValid`), ni los componentes de paso (`StepCovering`, `StepPlaceholder`), ni el resto del wizard.

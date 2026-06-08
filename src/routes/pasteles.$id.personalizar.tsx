@@ -37,13 +37,15 @@ export const Route = createFileRoute("/pasteles/$id/personalizar")({
   ),
 });
 
-const STEPS: WizardStep[] = [
-  { id: 1, label: "Sabores" },
-  { id: 2, label: "Relleno" },
-  { id: 3, label: "Decoración" },
-  { id: 4, label: "Texto" },
-  { id: 5, label: "Resumen" },
-];
+function getSteps(isBizcocho: boolean): WizardStep[] {
+  return [
+    { id: 1, label: "Sabores" },
+    { id: 2, label: isBizcocho ? "Cobertura" : "Relleno" },
+    { id: 3, label: "Decoración" },
+    { id: 4, label: "Texto" },
+    { id: 5, label: "Resumen" },
+  ];
+}
 
 function PersonalizarRoute() {
   return (
