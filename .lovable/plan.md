@@ -1,40 +1,35 @@
-## Problema
+## Objetivo
 
-`/pasteles/red-velvet/personalizar` muestra la **ficha del pastel** en lugar del **wizard de personalización**, aunque el archivo `src/routes/pasteles.$id.personalizar.tsx` existe y está registrado en `routeTree.gen.ts`.
+Implementar el Paso 2 del wizard de personalización **solo cuando el producto sea de la categoría "Tartas"**. En ese caso el cliente elige una única cobertura entre 6 opciones. Para "Bizcochos" y "Tartas de Época" el Paso 2 sigue mostrando el placeholder actual.
 
-En el routing plano de TanStack Router, cuando existen a la vez:
+## Cambios
 
-```
-src/routes/pasteles.$id.tsx            ← se convierte en LAYOUT padre
-src/routes/pasteles.$id.personalizar.tsx ← hijo
-```
+### 1. Nuevo componente `src/components/customization/steps/StepCovering.tsx`
 
-El archivo `pasteles.$id.tsx` pasa a comportarse como layout y debería renderizar `<Outlet />` para que el hijo aparezca. Como hoy renderiza la ficha completa sin `<Outlet />`, al navegar al hijo el layout monta la ficha y el wizard nunca llega a verse.
+- Título: "Elige la cobertura" + descripción corta.
+- Selección **única** (radio): al pulsar una opción se guarda en `state.covering` mediante `update("covering", value)`.
+- Opciones (ya existen en `src/data/customization.ts` → `COVERINGS`):
+  - Sin cobertura
+  - Chocolate negro
+  - Chocolate blanco
+  - Almíbar de naranja
+  - Almíbar de limón
+  - Chocolate con leche
+- Reutiliza `SelectableCard` con `selected={state.covering === opt}`.
 
-## Solución
+### 2. `src/routes/pasteles.$id.personalizar.tsx`
 
-Convertir la ficha en una hoja `index` para que `pasteles.$id.tsx` deje de ser layout. Resultado:
+- Importar `StepCovering`.
+- Calcular `isTarta = product.category === "Tartas"`.
+- En `stepValid[2]`:
+  - Si `isTarta`: `state.covering !== ""` (obligatorio elegir una).
+  - Si no: `true` (placeholder, como ahora).
+- En el render del paso 2:
+  - Si `isTarta`: `<StepCovering />`.
+  - Si no: el `StepPlaceholder` actual sin cambios.
 
-```
-src/routes/pasteles.$id.index.tsx         ← /pasteles/$id (ficha actual, sin cambios de contenido)
-src/routes/pasteles.$id.personalizar.tsx  ← /pasteles/$id/personalizar (wizard)
-```
+### Fuera de alcance
 
-Sin layout intermedio, cada URL renderiza su componente directamente y el problema desaparece.
-
-## Pasos concretos
-
-1. **Renombrar** `src/routes/pasteles.$id.tsx` → `src/routes/pasteles.$id.index.tsx`.
-2. **Actualizar** dentro de ese archivo la línea:
-   - `createFileRoute("/pasteles/$id")` → `createFileRoute("/pasteles/$id/")`
-   - Nada más cambia: misma UI, mismo `useProduct`, mismo botón "Personalizar mi pastel".
-3. **No tocar** `pasteles.$id.personalizar.tsx` ni el contenido del wizard ya implementado (Paso 1 Sabores + placeholders).
-4. **No editar** `src/routeTree.gen.ts`; se regenera solo en el siguiente build.
-5. **Verificar en el preview**:
-   - `/pasteles/red-velvet` → sigue mostrando la ficha del Red Velvet con su botón.
-   - Pulsar "Personalizar mi pastel" → navega a `/pasteles/red-velvet/personalizar` y se ve el wizard con el Paso 1 (los 9 sabores que pediste).
-
-## Fuera de alcance
-
-- No se toca el catálogo (`/mis-pasteles`), el carrito, ni los demás pasos del wizard.
-- No se renombran sabores ni se cambia la lógica del Paso 1 (ya coincide con tu lista: Crema pastelera, Yema quemada, Trufa, Chocolate blanco, Nocilla, Crema de pistacho, Crema de lotus, Nata, Crema de naranja).
+- No se toca Paso 1 (Sabores) ni Pasos 3-5.
+- No se cambian precios, ni el catálogo, ni los textos de las coberturas (se usan tal cual están en `COVERINGS`).
+- Bizcochos y Tartas de Época mantienen el placeholder "Próximamente" en el Paso 2.
