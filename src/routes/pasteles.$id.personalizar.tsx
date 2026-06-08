@@ -160,10 +160,14 @@ function PersonalizarPage() {
         <div key={current} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           {current === 1 && <StepFlavors />}
           {current === 2 && (
-            <StepPlaceholder
-              title="Relleno"
-              description="Elige el relleno que acompañará a tus sabores."
-            />
+            isTarta ? (
+              <StepCovering />
+            ) : (
+              <StepPlaceholder
+                title="Relleno"
+                description="Elige el relleno que acompañará a tus sabores."
+              />
+            )
           )}
           {current === 3 && (
             <StepPlaceholder
