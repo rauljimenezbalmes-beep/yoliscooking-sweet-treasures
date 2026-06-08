@@ -37,13 +37,15 @@ export const Route = createFileRoute("/pasteles/$id/personalizar")({
   ),
 });
 
-const STEPS: WizardStep[] = [
-  { id: 1, label: "Sabores" },
-  { id: 2, label: "Relleno" },
-  { id: 3, label: "Decoración" },
-  { id: 4, label: "Texto" },
-  { id: 5, label: "Resumen" },
-];
+function getSteps(isBizcocho: boolean): WizardStep[] {
+  return [
+    { id: 1, label: "Sabores" },
+    { id: 2, label: isBizcocho ? "Cobertura" : "Relleno" },
+    { id: 3, label: "Decoración" },
+    { id: 4, label: "Texto" },
+    { id: 5, label: "Resumen" },
+  ];
+}
 
 function PersonalizarRoute() {
   return (
@@ -63,6 +65,7 @@ function PersonalizarPage() {
   if (!product) throw notFound();
 
   const isBizcocho = product?.category === "Bizcochos";
+  const steps = getSteps(isBizcocho);
 
   // Validation per step
   const stepValid: Record<number, boolean> = {
@@ -73,10 +76,10 @@ function PersonalizarPage() {
     5: true,
   };
   const completed = new Set<number>(
-    STEPS.filter((s) => s.id < current && stepValid[s.id]).map((s) => s.id),
+    steps.filter((s) => s.id < current && stepValid[s.id]).map((s) => s.id),
   );
 
-  const isLast = current === STEPS.length;
+  const isLast = current === steps.length;
 
   function handleNext() {
     if (!stepValid[current]) return;
@@ -102,7 +105,7 @@ function PersonalizarPage() {
       navigate({ to: "/carrito" });
       return;
     }
-    setCurrent((c) => Math.min(STEPS.length, c + 1));
+    setCurrent((c) => Math.min(steps.length, c + 1));
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -146,7 +149,7 @@ function PersonalizarPage() {
           </div>
           <div className="mt-4">
             <WizardProgress
-              steps={STEPS}
+              steps={steps}
               current={current}
               completed={completed}
               onJump={handleJump}
