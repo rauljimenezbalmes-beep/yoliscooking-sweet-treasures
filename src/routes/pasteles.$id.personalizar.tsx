@@ -105,7 +105,7 @@ function PersonalizarPage() {
       navigate({ to: "/carrito" });
       return;
     }
-    setCurrent((c) => Math.min(STEPS.length, c + 1));
+    setCurrent((c) => Math.min(steps.length, c + 1));
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
