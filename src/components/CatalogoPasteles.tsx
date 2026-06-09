@@ -46,7 +46,7 @@ export function CatalogoPasteles({
   return (
     <>
       <section className="bg-gradient-warm">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
           {showHeader && (
             <div className="text-center">
               <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
@@ -59,7 +59,7 @@ export function CatalogoPasteles({
             </div>
           )}
 
-          <div className="mx-auto mt-10 max-w-2xl">
+          <div className="mx-auto mt-6 max-w-2xl">
             <label htmlFor="buscar-catalogo" className="sr-only">
               Buscar tu tarta
             </label>
@@ -88,7 +88,7 @@ export function CatalogoPasteles({
         </div>
       </section>
 
-      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         {categories.map((cat) => {
           const items = filteredByCategory.get(cat) ?? [];
           if (items.length === 0) return null;
