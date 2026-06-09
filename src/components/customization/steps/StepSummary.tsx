@@ -1,6 +1,6 @@
 import { useCustomization } from "@/context/CustomizationContext";
 import { useResolvedWizardOptions } from "@/data/product-wizard-store";
-import { computePrice, SIZES } from "@/data/customization";
+import { resolveWizardPrice } from "@/data/customization";
 import type { Product } from "@/data/products";
 
 function formatPrice(n: number): string {
@@ -11,20 +11,12 @@ export function StepSummary({ product }: { product: Product }) {
   const { state } = useCustomization();
   const { options: sizeOpts } = useResolvedWizardOptions(product.id, "size");
 
-  // Buscar multiplicador en opciones admin
   const selectedSize = sizeOpts.find((o) => {
     const id = (o.value ?? o.label).toLowerCase();
     return id === state.sizeId || o.label === state.sizeId;
   });
-  const adminMult =
-    selectedSize?.extra && typeof selectedSize.extra === "object" && !Array.isArray(selectedSize.extra)
-      ? Number((selectedSize.extra as Record<string, unknown>).multiplier)
-      : NaN;
-  const sizeIdFallback = SIZES.find((s) => s.id === state.sizeId) ? state.sizeId : "pequeno";
   const decoration = state.decoration || "clasica";
-  const price = Number.isFinite(adminMult) && adminMult > 0
-    ? Math.round((product.price * adminMult + (decoration === "personalizada" ? 8 : 0)) * 100) / 100
-    : computePrice(product.price, sizeIdFallback, decoration);
+  const price = resolveWizardPrice(product.price, sizeOpts, state.sizeId, decoration);
 
   return (
     <div>

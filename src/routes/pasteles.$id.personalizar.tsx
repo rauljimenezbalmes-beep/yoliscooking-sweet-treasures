@@ -7,9 +7,9 @@ import { z } from "zod";
 import { useProduct } from "@/data/products-store";
 import { addToCart, updateCartItem, useCart } from "@/data/cart-store";
 import {
-  computePrice,
   MIN_DELIVERY_DAYS,
   SIZES,
+  resolveWizardPrice,
   type CakeCustomization,
 } from "@/data/customization";
 import {
@@ -214,9 +214,10 @@ function PersonalizarPage({ editId }: { editId?: string }) {
         sizeId: sizeIdFinal,
         deliveryDate: state.deliveryDate,
       };
-      const price = computePrice(
+      const price = resolveWizardPrice(
         product!.price,
-        SIZES.find((s) => s.id === sizeIdFinal) ? sizeIdFinal : "pequeno",
+        sizeOpts,
+        sizeIdFinal,
         customization.decoration,
       );
       if (isEditing && editId) {
