@@ -102,9 +102,7 @@ function CartPage() {
                     <Row k="Tamaño" v={sizeLabel(it.customization.sizeId)} />
                     <Row
                       k="Entrega"
-                      v={format(new Date(it.customization.deliveryDate), "d 'de' MMM yyyy", {
-                        locale: es,
-                      })}
+                      v={formatDeliveryDate(it.customization.deliveryDate)}
                     />
                   </dl>
                   <button
