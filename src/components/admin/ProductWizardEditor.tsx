@@ -356,11 +356,13 @@ function ExtraRow({
   productId,
   showValue,
   showDescription,
+  showPrice,
 }: {
   row: ProductWizardOption;
   productId: string;
   showValue: boolean;
   showDescription: boolean;
+  showPrice?: boolean;
 }) {
   const updateMut = useUpdateProductExtra();
   const deleteMut = useDeleteProductWizardRow();
