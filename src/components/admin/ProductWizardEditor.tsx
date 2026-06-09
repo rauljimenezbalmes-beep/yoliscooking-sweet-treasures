@@ -68,6 +68,7 @@ function TypeSection({ productId, type }: { productId: string; type: WizardOptio
   const { data: globals, isLoading: loadingGlobals } = useWizardOptions(type);
   const { data: overrides, isLoading: loadingOverrides } = useProductWizardRows(productId);
   const toggleMut = useToggleGlobalForProduct();
+  const product = useProduct(productId);
 
   const overridesForType = (overrides ?? []).filter((o) => o.type === type);
   const overrideByGlobalId = new Map(
@@ -82,7 +83,6 @@ function TypeSection({ productId, type }: { productId: string; type: WizardOptio
   }
 
   const isSizeTab = type === "size";
-  const product = useProduct(productId);
   const basePrice = product?.price ?? 0;
 
   return (
