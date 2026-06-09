@@ -219,8 +219,13 @@ function PersonalizarPage({ editId }: { editId?: string }) {
         SIZES.find((s) => s.id === sizeIdFinal) ? sizeIdFinal : "pequeno",
         customization.decoration,
       );
-      await addToCart(customization, price);
-      toast.success("¡Pastel añadido al carrito!");
+      if (isEditing && editId) {
+        await updateCartItem(editId, customization, price);
+        toast.success("Pastel actualizado.");
+      } else {
+        await addToCart(customization, price);
+        toast.success("¡Pastel añadido al carrito!");
+      }
       navigate({ to: "/carrito" });
       return;
     }
@@ -259,7 +264,7 @@ function PersonalizarPage({ editId }: { editId?: string }) {
               />
               <div className="hidden text-right sm:block">
                 <p className="text-[10px] uppercase tracking-[0.18em] text-primary">
-                  Personalizando
+                  {isEditing ? "Editando" : "Personalizando"}
                 </p>
                 <p className="text-sm font-semibold text-foreground">{product.name}</p>
               </div>
@@ -288,7 +293,7 @@ function PersonalizarPage({ editId }: { editId?: string }) {
         canGoBack={current > 1}
         canGoNext={canGoNext}
         isLast={isLast}
-        nextLabel={isLast ? "Añadir al carrito" : "Continuar"}
+        nextLabel={isLast ? (isEditing ? "Guardar cambios" : "Añadir al carrito") : "Continuar"}
       />
     </div>
   );
