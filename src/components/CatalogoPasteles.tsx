@@ -4,6 +4,17 @@ import { categories, type Category, type Product } from "@/data/products";
 import { useProducts } from "@/data/products-store";
 import { ProductCard } from "@/components/ProductCard";
 
+const categorySlug: Record<Category, string> = {
+  "Tartas": "cat-tartas",
+  "Bizcochos": "cat-bizcochos",
+  "Dulces de Temporada": "cat-dulces-temporada",
+};
+
+function scrollToCategory(id: string) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 interface CatalogoPasteleProps {
   showHeader?: boolean;
   eyebrow?: string;
@@ -84,6 +95,23 @@ export function CatalogoPasteles({
                   : `${totalMatches} resultado${totalMatches === 1 ? "" : "s"} para “${query}”.`}
               </p>
             )}
+
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+              {categories.map((cat) => {
+                const has = (filteredByCategory.get(cat) ?? []).length > 0;
+                if (!has) return null;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => scrollToCategory(categorySlug[cat])}
+                    className="rounded-full border border-border bg-background/80 px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
@@ -93,7 +121,11 @@ export function CatalogoPasteles({
           const items = filteredByCategory.get(cat) ?? [];
           if (items.length === 0) return null;
           return (
-            <section key={cat} className="mb-16 last:mb-0">
+            <section
+              key={cat}
+              id={categorySlug[cat]}
+              className="mb-16 scroll-mt-24 last:mb-0"
+            >
               <div className="mb-8 flex items-end justify-between gap-4">
                 <div>
                   <h3 className="font-display text-3xl text-foreground sm:text-4xl">
