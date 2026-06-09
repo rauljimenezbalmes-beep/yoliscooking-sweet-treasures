@@ -81,12 +81,22 @@ function TypeSection({ productId, type }: { productId: string; type: WizardOptio
     return <p className="text-sm text-muted-foreground">Cargando…</p>;
   }
 
+  const isSizeTab = type === "size";
+  const product = useProduct(productId);
+  const basePrice = product?.price ?? 0;
+
   return (
     <div className="space-y-6">
       <div>
         <h3 className="mb-2 text-sm font-semibold text-foreground">
           Opciones globales
         </h3>
+        {isSizeTab && (
+          <p className="mb-3 rounded-xl bg-accent/30 p-3 text-xs text-muted-foreground">
+            Puedes fijar un precio concreto en € para este pastel y tamaño. Si lo dejas vacío,
+            se calculará automáticamente con el precio base ({basePrice.toFixed(2)} €) × multiplicador del tamaño.
+          </p>
+        )}
         {!globals || globals.length === 0 ? (
           <p className="rounded-xl bg-muted/40 p-4 text-sm text-muted-foreground">
             No hay opciones globales en esta categoría. Créalas desde Admin → Wizard.
@@ -126,28 +136,38 @@ function TypeSection({ productId, type }: { productId: string; type: WizardOptio
                         Global
                       </span>
                     </div>
-                    <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
-                      <input
-                        type="checkbox"
-                        checked={enabled}
-                        disabled={toggleMut.isPending}
-                        onChange={async (e) => {
-                          try {
-                            await toggleMut.mutateAsync({
-                              productId,
-                              type,
-                              global: g,
-                              enabled: e.target.checked,
-                              existingId: ov?.id,
-                            });
-                          } catch (err) {
-                            toast.error(err instanceof Error ? err.message : "Error");
-                          }
-                        }}
-                        className="h-4 w-4 accent-primary"
-                      />
-                      {enabled ? "Activa" : "Oculta"}
-                    </label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {isSizeTab && (
+                        <SizePriceInput
+                          productId={productId}
+                          global={g}
+                          existing={ov}
+                          basePrice={basePrice}
+                        />
+                      )}
+                      <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                        <input
+                          type="checkbox"
+                          checked={enabled}
+                          disabled={toggleMut.isPending}
+                          onChange={async (e) => {
+                            try {
+                              await toggleMut.mutateAsync({
+                                productId,
+                                type,
+                                global: g,
+                                enabled: e.target.checked,
+                                existingId: ov?.id,
+                              });
+                            } catch (err) {
+                              toast.error(err instanceof Error ? err.message : "Error");
+                            }
+                          }}
+                          className="h-4 w-4 accent-primary"
+                        />
+                        {enabled ? "Activa" : "Oculta"}
+                      </label>
+                    </div>
                   </li>
                 );
               })}
@@ -156,6 +176,74 @@ function TypeSection({ productId, type }: { productId: string; type: WizardOptio
       </div>
 
       <ExtrasManager productId={productId} type={type} extras={extras} />
+    </div>
+  );
+}
+
+function SizePriceInput({
+  productId,
+  global,
+  existing,
+  basePrice,
+}: {
+  productId: string;
+  global: WizardOption;
+  existing?: ProductWizardOption;
+  basePrice: number;
+}) {
+  const setPriceMut = useSetGlobalSizePrice();
+  const currentPrice =
+    existing?.extra && typeof existing.extra === "object" && !Array.isArray(existing.extra)
+      ? (existing.extra as Record<string, unknown>).price
+      : undefined;
+  const initial = typeof currentPrice === "number" ? String(currentPrice) : "";
+  const [value, setValue] = useState(initial);
+  useEffect(() => {
+    setValue(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existing?.id, currentPrice]);
+
+  const multiplier =
+    global.extra && typeof global.extra === "object" && !Array.isArray(global.extra)
+      ? Number((global.extra as Record<string, unknown>).multiplier)
+      : NaN;
+  const auto = Number.isFinite(multiplier) && multiplier > 0 ? basePrice * multiplier : null;
+
+  async function save() {
+    const trimmed = value.trim();
+    const parsed = trimmed === "" ? null : Number(trimmed);
+    if (trimmed !== "" && (!Number.isFinite(parsed!) || parsed! <= 0)) {
+      toast.error("Precio no válido");
+      return;
+    }
+    try {
+      await setPriceMut.mutateAsync({ productId, global, existing, price: parsed });
+      toast.success(parsed === null ? "Precio automático" : "Precio guardado");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error");
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <input
+        type="number"
+        step="0.5"
+        min="0"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+        placeholder={auto !== null ? `auto ${auto.toFixed(2)}` : "auto"}
+        disabled={setPriceMut.isPending}
+        className="w-24 rounded-lg border border-border bg-background px-2.5 py-1 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+      />
+      <span className="text-xs text-muted-foreground">€</span>
     </div>
   );
 }
