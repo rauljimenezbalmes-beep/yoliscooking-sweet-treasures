@@ -534,3 +534,71 @@ function ExtraRow({
     </li>
   );
 }
+
+function ExtraSizePriceInput({
+  row,
+  productId,
+}: {
+  row: ProductWizardOption;
+  productId: string;
+}) {
+  const updateMut = useUpdateProductExtra();
+  const currentPrice =
+    row.extra && typeof row.extra === "object" && !Array.isArray(row.extra)
+      ? (row.extra as Record<string, unknown>).price
+      : undefined;
+  const initial = typeof currentPrice === "number" ? String(currentPrice) : "";
+  const [value, setValue] = useState(initial);
+  useEffect(() => {
+    setValue(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row.id, currentPrice]);
+
+  async function save() {
+    const trimmed = value.trim();
+    const parsed = trimmed === "" ? null : Number(trimmed);
+    if (trimmed !== "" && (!Number.isFinite(parsed!) || parsed! <= 0)) {
+      toast.error("Precio no válido");
+      return;
+    }
+    const baseExtra =
+      row.extra && typeof row.extra === "object" && !Array.isArray(row.extra)
+        ? { ...(row.extra as Record<string, unknown>) }
+        : {};
+    if (parsed === null) delete baseExtra.price;
+    else baseExtra.price = parsed;
+    try {
+      await updateMut.mutateAsync({
+        id: row.id,
+        productId,
+        patch: { extra: baseExtra as never },
+      });
+      toast.success(parsed === null ? "Precio automático" : "Precio guardado");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error");
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <input
+        type="number"
+        step="0.5"
+        min="0"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+        placeholder="auto"
+        disabled={updateMut.isPending}
+        className="w-24 rounded-lg border border-border bg-background px-2.5 py-1 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+      />
+      <span className="text-xs text-muted-foreground">€</span>
+    </div>
+  );
+}
