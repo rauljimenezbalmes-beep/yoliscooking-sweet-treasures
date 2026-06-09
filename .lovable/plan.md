@@ -1,68 +1,73 @@
-## Objetivo
+## Problema
 
-Permitir personalizar las opciones del wizard **por cada pastel** desde su ficha en admin, manteniendo las opciones globales actuales como base. Para cada pastel se podrá:
+En el wizard del cliente sólo dos pasos leen lo configurado en admin:
 
-- Activar/desactivar opciones globales.
-- Añadir opciones exclusivas de ese pastel (extras).
-- Para todos los pasos del wizard: sabores, coberturas/rellenos, decoración, temas, colores y tamaños.
+- Paso 1 **Sabores** → ya usa las opciones del pastel.
+- Paso 2 **Cobertura** → sólo se renderiza si el producto es categoría "Bizcochos". Para tartas (red-velvet, etc.) se muestra el placeholder "Próximamente".
+- Pasos 3, 4 y 5 (Decoración, Texto, Resumen) → todos son placeholders.
 
-## Modelo de datos
+Por eso lo que activas en las pestañas Coberturas, Decoración, Temas, Colores y Tamaños en `/admin/pasteles/$id` nunca aparece al personalizar como cliente.
 
-Nueva tabla `product_wizard_options` (extras + overrides):
+## Solución
+
+Hacer que cada paso del cliente lea sus opciones del pastel desde `useResolvedWizardLabels(productId, type)` (helper que ya existe y combina globales activos + extras del pastel).
+
+### Paso 2 — Cobertura/Relleno (siempre, no sólo Bizcochos)
+
+- Eliminar la rama placeholder. Usar siempre `StepCovering` con `productId`.
+- Título dinámico: "Cobertura" si el producto es **Bizcochos**, "Relleno" para el resto (manteniendo la etiqueta actual de los pasos).
+- `stepValid[2]` requiere selección sólo si hay opciones disponibles para ese pastel (si no hay ninguna, el paso se considera válido para no bloquear).
+
+### Paso 3 — Decoración
+
+Nuevo componente `StepDecoration({ productId })`:
+
+- Lee opciones de tipo `decoration` (típicamente "Clásica" / "Personalizada"). Selección guarda `state.decoration`.
+- Si se elige Personalizada, muestra debajo:
+  - Selector de **tema** (`type=theme`) — opcional.
+  - Selector múltiple de **colores** (`type=color`) — usa el campo `value` (hex) para el swatch cuando existe.
+  - Textarea de descripción libre (ya existente en el estado).
+- Mapea el label seleccionado a `"clasica" | "personalizada"` por comparación case-insensitive con "personalizada" para mantener compatibilidad con `computePrice` y `CakeCustomization`.
+
+### Paso 4 — Texto / Tamaño / Entrega
+
+Renombrar y reutilizar paso "Texto" como **"Detalles"**:
+
+- Textarea para `state.customText` (mensaje en el pastel).
+- Selector de **tamaño** (`type=size`): muestra labels y si `extra.portions` o `extra.multiplier` están definidos los muestra como subtítulo. Selección guarda `state.sizeId` (usa `value` de la opción; si no hay, usa el label slug).
+- Input `date` para `state.deliveryDate` con `MIN_DELIVERY_DAYS` mínimo.
+
+### Paso 5 — Resumen
+
+Nuevo componente `StepSummary({ product })`:
+
+- Lista las elecciones: sabores, cobertura/relleno, decoración, tema, colores (chips con swatch), tamaño, fecha, texto.
+- Calcula y muestra el precio con `computePrice` usando el multiplicador del tamaño seleccionado (si la opción admin trae `extra.multiplier` numérico, se usa ese; si no, cae a los `SIZES` por defecto).
+- Botón final del footer ya añade al carrito (no cambia la lógica de `handleNext`).
+
+### Validación por paso
 
 ```text
-product_wizard_options
-- id            uuid pk
-- product_id    text  fk -> products.id
-- type          wizard_option_type  (sabor, cobertura, ...)
-- global_option_id uuid null  fk -> wizard_options.id
-- label         text null         (sólo cuando global_option_id is null = extra)
-- value         text null
-- description   text null
-- extra         jsonb default '{}'
-- sort_order    int default 0
-- enabled       boolean default true
-- created_at / updated_at
-- unique(product_id, global_option_id) cuando no es null
+1: state.flavors.length >= 1
+2: coverings.length === 0 || state.covering !== ""
+3: state.decoration !== "" && (decoration !== "personalizada" || colors.length > 0)
+4: state.deliveryDate set y >= hoy + MIN_DELIVERY_DAYS
+5: true
 ```
 
-Reglas:
-- Fila con `global_option_id` no nulo → override de un global; sólo se respeta `enabled` y opcionalmente `sort_order`.
-- Fila con `global_option_id` nulo → opción **extra** sólo para ese pastel; usa `label/value/description/extra`.
-- Si no hay overrides para un pastel+tipo, se muestran todos los globales activos.
+## Archivos a tocar
 
-RLS: lectura pública (igual que `wizard_options`); escritura sólo admins.
-
-## Capa de datos
-
-Nuevo `src/data/product-wizard-store.ts`:
-
-- `useProductWizardOptions(productId, type)` → combina globales activos + overrides + extras y devuelve la lista final ordenada que ve el cliente.
-- `useProductWizardOverrides(productId)` → datos crudos para el editor admin (todos los tipos).
-- Mutaciones: `useToggleGlobalForProduct`, `useUpsertProductExtra`, `useDeleteProductExtra`, `useReorderProductOptions`.
-
-Refactor mínimo en los pasos del wizard (`StepFlavors`, `StepCovering`, `StepPlaceholder` para decoración/tema/color/tamaño) para que reciban el `productId` (ya disponible vía `useCustomization` / ruta `/pasteles/$id/personalizar`) y usen el nuevo hook en lugar de `useActiveWizardLabels`.
-
-## UI de administración
-
-Dentro de `src/routes/admin.pasteles.$id.tsx`, añadir una segunda sección debajo del `CakeForm` titulada **"Opciones del wizard para este pastel"**, sólo visible al editar (no en `new`).
-
-Componente nuevo `src/components/admin/ProductWizardEditor.tsx`:
-
-- Tabs por tipo: Sabores · Coberturas · Decoración · Temas · Colores · Tamaños.
-- Por cada tab:
-  - Sección **"Opciones globales"**: lista de globales activos con un switch para activar/desactivar ese global en este pastel. Por defecto todos activos.
-  - Sección **"Extras de este pastel"**: lista editable (label / value / descripción según tipo) con botones añadir, editar, eliminar — misma UX que `/admin/wizard` pero scope al pastel.
-- Indicador visual que distinga global vs extra.
+- `src/components/customization/steps/StepDecoration.tsx` (nuevo)
+- `src/components/customization/steps/StepDetails.tsx` (nuevo, sustituye a "Texto")
+- `src/components/customization/steps/StepSummary.tsx` (nuevo)
+- `src/routes/pasteles.$id.personalizar.tsx`:
+  - paso 2 siempre con `StepCovering`
+  - sustituir los 3 placeholders restantes por los nuevos componentes
+  - actualizar `stepValid` y etiqueta del paso 4 a "Detalles"
+- `src/components/customization/steps/StepCovering.tsx`: copy dinámico ("cobertura" vs "relleno") según `isBizcocho` recibido como prop opcional.
 
 ## Fuera de alcance
 
-- Reordenación drag-and-drop (sólo `sort_order` numérico, opcional en una segunda pasada).
-- Cambios en el wizard global (`/admin/wizard`) — sigue igual.
-- Lógica de precios o validación nueva.
-
-## Detalles técnicos
-
-- Migración crea tabla + GRANTs (`authenticated`, `service_role`, `anon SELECT`) + RLS + policies (`has_role(auth.uid(),'admin')` para escritura, lectura pública) + trigger `updated_at`.
-- El hook `useProductWizardOptions` hace dos queries en paralelo (globales del tipo + overrides del producto+tipo) y las combina en memoria con `useMemo`.
-- Invalidación de queries tras cada mutación con clave `["product-wizard", productId, type]`.
+- No se cambia el esquema de BD ni la API admin.
+- No se añaden subidas de imágenes ni nuevos campos de personalización.
+- Lógica de precio se mantiene (`computePrice` con multiplicador del tamaño).
