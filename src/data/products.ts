@@ -11,7 +11,7 @@ import santiago from "@/assets/santiago.jpg";
 import brazo from "@/assets/brazo-gitano.jpg";
 import coca from "@/assets/coca.jpg";
 
-export type Category = "Tartas" | "Bizcochos" | "Tartas de Época";
+export type Category = "Tartas" | "Bizcochos" | "Dulces de Temporada";
 
 export interface Product {
   id: string;
@@ -119,7 +119,7 @@ export const defaultProducts: Product[] = [
     name: "Roscón de Reyes",
     description: "Esponjoso, aromatizado con agua de azahar y frutas confitadas.",
     image: roscon,
-    category: "Tartas de Época",
+    category: "Dulces de Temporada",
     price: 20,
     ingredients: ["Harina", "Agua de azahar", "Frutas confitadas", "Huevos", "Mantequilla"],
     tags: ["enero"],
@@ -130,7 +130,7 @@ export const defaultProducts: Product[] = [
     name: "Tarta de Santiago",
     description: "Almendra, huevo y azúcar. Sencilla, tradicional, inolvidable.",
     image: santiago,
-    category: "Tartas de Época",
+    category: "Dulces de Temporada",
     price: 22,
     ingredients: ["Almendra", "Huevos", "Azúcar", "Limón"],
     tags: ["sin gluten"],
@@ -141,7 +141,7 @@ export const defaultProducts: Product[] = [
     name: "Brazo de Gitano",
     description: "Bizcocho enrollado con crema suave casera.",
     image: brazo,
-    category: "Tartas de Época",
+    category: "Dulces de Temporada",
     price: 18,
     ingredients: ["Bizcocho", "Crema pastelera", "Azúcar glas"],
     tags: ["clásico"],
@@ -152,7 +152,7 @@ export const defaultProducts: Product[] = [
     name: "Coca de Sant Joan",
     description: "Frutas confitadas y piñones sobre masa esponjosa de verbena.",
     image: coca,
-    category: "Tartas de Época",
+    category: "Dulces de Temporada",
     price: 19,
     ingredients: ["Masa brioche", "Frutas confitadas", "Piñones", "Azúcar"],
     tags: ["junio"],
@@ -160,4 +160,4 @@ export const defaultProducts: Product[] = [
   },
 ];
 
-export const categories: Category[] = ["Tartas", "Bizcochos", "Tartas de Época"];
+export const categories: Category[] = ["Tartas", "Bizcochos", "Dulces de Temporada"];
