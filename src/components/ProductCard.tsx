@@ -37,7 +37,7 @@ export function ProductCard({ product }: { product: Product }) {
             </Link>
           </h3>
           <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
-            {product.price.toFixed(2)} €
+            Desde {product.price.toFixed(2)} €
           </span>
         </div>
         <p className="flex-1 text-sm leading-relaxed text-muted-foreground">
