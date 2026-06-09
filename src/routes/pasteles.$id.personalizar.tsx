@@ -214,9 +214,10 @@ function PersonalizarPage({ editId }: { editId?: string }) {
         sizeId: sizeIdFinal,
         deliveryDate: state.deliveryDate,
       };
-      const price = computePrice(
+      const price = resolveWizardPrice(
         product!.price,
-        SIZES.find((s) => s.id === sizeIdFinal) ? sizeIdFinal : "pequeno",
+        sizeOpts,
+        sizeIdFinal,
         customization.decoration,
       );
       if (isEditing && editId) {
