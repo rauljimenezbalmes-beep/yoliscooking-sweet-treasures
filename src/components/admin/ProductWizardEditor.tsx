@@ -473,6 +473,10 @@ function ExtraRow({
         )}
       </div>
 
+      {showPrice && !editing && (
+        <ExtraSizePriceInput row={row} productId={productId} />
+      )}
+
       <div className="flex items-center gap-1">
         {editing ? (
           <>
