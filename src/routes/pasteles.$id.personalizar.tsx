@@ -161,10 +161,10 @@ function PersonalizarPage() {
       {/* Step body */}
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
         <div key={current} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          {current === 1 && <StepFlavors />}
+          {current === 1 && <StepFlavors productId={product.id} />}
           {current === 2 && (
             isBizcocho ? (
-              <StepCovering />
+              <StepCovering productId={product.id} />
             ) : (
               <StepPlaceholder
                 title="Relleno"

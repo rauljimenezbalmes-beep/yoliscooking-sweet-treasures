@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useProduct } from "@/data/products-store";
 import { CakeForm } from "@/components/CakeForm";
+import { ProductWizardEditor } from "@/components/admin/ProductWizardEditor";
 import type { Product } from "@/data/products";
 
 export const Route = createFileRoute("/admin/pasteles/$id")({
@@ -87,6 +88,7 @@ function EditarPastel() {
         </h1>
       </div>
       <CakeForm product={product} mode="edit" />
+      <ProductWizardEditor productId={product.id} />
     </section>
   );
 }
