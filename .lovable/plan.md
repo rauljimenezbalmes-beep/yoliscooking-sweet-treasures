@@ -1,73 +1,24 @@
-## Problema
+## Objetivo
+Cuando el admin desactiva todas las etiquetas de un paso (sabores, cobertura/relleno, o decoración) para un pastel, ese paso desaparece en el wizard del cliente y la barra de progreso se reajusta automáticamente al nuevo número de pasos.
 
-En el wizard del cliente sólo dos pasos leen lo configurado en admin:
+## Comportamiento por paso
 
-- Paso 1 **Sabores** → ya usa las opciones del pastel.
-- Paso 2 **Cobertura** → sólo se renderiza si el producto es categoría "Bizcochos". Para tartas (red-velvet, etc.) se muestra el placeholder "Próximamente".
-- Pasos 3, 4 y 5 (Decoración, Texto, Resumen) → todos son placeholders.
+- **Sabores**: se oculta si no hay opciones de `flavor` resueltas.
+- **Cobertura/Relleno**: se oculta si no hay opciones de `covering` resueltas (ya se valida así, solo falta no contarlo como paso).
+- **Decoración**: se oculta si no hay opciones de `decoration` (ni `theme`/`color`) resueltas.
+- **Detalles**: siempre visible (la fecha de entrega es obligatoria). El selector de tamaño dentro del paso ya se adapta si no hay tamaños.
+- **Resumen**: siempre visible.
 
-Por eso lo que activas en las pestañas Coberturas, Decoración, Temas, Colores y Tamaños en `/admin/pasteles/$id` nunca aparece al personalizar como cliente.
+## Cambios técnicos (solo `src/routes/pasteles.$id.personalizar.tsx`)
 
-## Solución
-
-Hacer que cada paso del cliente lea sus opciones del pastel desde `useResolvedWizardLabels(productId, type)` (helper que ya existe y combina globales activos + extras del pastel).
-
-### Paso 2 — Cobertura/Relleno (siempre, no sólo Bizcochos)
-
-- Eliminar la rama placeholder. Usar siempre `StepCovering` con `productId`.
-- Título dinámico: "Cobertura" si el producto es **Bizcochos**, "Relleno" para el resto (manteniendo la etiqueta actual de los pasos).
-- `stepValid[2]` requiere selección sólo si hay opciones disponibles para ese pastel (si no hay ninguna, el paso se considera válido para no bloquear).
-
-### Paso 3 — Decoración
-
-Nuevo componente `StepDecoration({ productId })`:
-
-- Lee opciones de tipo `decoration` (típicamente "Clásica" / "Personalizada"). Selección guarda `state.decoration`.
-- Si se elige Personalizada, muestra debajo:
-  - Selector de **tema** (`type=theme`) — opcional.
-  - Selector múltiple de **colores** (`type=color`) — usa el campo `value` (hex) para el swatch cuando existe.
-  - Textarea de descripción libre (ya existente en el estado).
-- Mapea el label seleccionado a `"clasica" | "personalizada"` por comparación case-insensitive con "personalizada" para mantener compatibilidad con `computePrice` y `CakeCustomization`.
-
-### Paso 4 — Texto / Tamaño / Entrega
-
-Renombrar y reutilizar paso "Texto" como **"Detalles"**:
-
-- Textarea para `state.customText` (mensaje en el pastel).
-- Selector de **tamaño** (`type=size`): muestra labels y si `extra.portions` o `extra.multiplier` están definidos los muestra como subtítulo. Selección guarda `state.sizeId` (usa `value` de la opción; si no hay, usa el label slug).
-- Input `date` para `state.deliveryDate` con `MIN_DELIVERY_DAYS` mínimo.
-
-### Paso 5 — Resumen
-
-Nuevo componente `StepSummary({ product })`:
-
-- Lista las elecciones: sabores, cobertura/relleno, decoración, tema, colores (chips con swatch), tamaño, fecha, texto.
-- Calcula y muestra el precio con `computePrice` usando el multiplicador del tamaño seleccionado (si la opción admin trae `extra.multiplier` numérico, se usa ese; si no, cae a los `SIZES` por defecto).
-- Botón final del footer ya añade al carrito (no cambia la lógica de `handleNext`).
-
-### Validación por paso
-
-```text
-1: state.flavors.length >= 1
-2: coverings.length === 0 || state.covering !== ""
-3: state.decoration !== "" && (decoration !== "personalizada" || colors.length > 0)
-4: state.deliveryDate set y >= hoy + MIN_DELIVERY_DAYS
-5: true
-```
-
-## Archivos a tocar
-
-- `src/components/customization/steps/StepDecoration.tsx` (nuevo)
-- `src/components/customization/steps/StepDetails.tsx` (nuevo, sustituye a "Texto")
-- `src/components/customization/steps/StepSummary.tsx` (nuevo)
-- `src/routes/pasteles.$id.personalizar.tsx`:
-  - paso 2 siempre con `StepCovering`
-  - sustituir los 3 placeholders restantes por los nuevos componentes
-  - actualizar `stepValid` y etiqueta del paso 4 a "Detalles"
-- `src/components/customization/steps/StepCovering.tsx`: copy dinámico ("cobertura" vs "relleno") según `isBizcocho` recibido como prop opcional.
+1. Resolver también `flavor`, `theme`, `color` con `useResolvedWizardOptions` además de los actuales.
+2. Sustituir `getSteps(isBizcocho)` por una construcción dinámica que devuelva un array `steps` con `{ key, label, render, valid }`, donde `key ∈ {"flavors","covering","decoration","details","summary"}`. Solo se añaden los pasos con contenido (regla anterior).
+3. Asignar `id` numérico 1..N **después** de filtrar, para que `WizardProgress` siga recibiendo IDs consecutivos. La UI no necesita cambios.
+4. `current` sigue siendo numérico 1..N sobre el array filtrado. El renderizado pasa de `current === 1 && <StepFlavors/>` etc. a `steps[current-1].render()`.
+5. `stepValid` y `completed` se calculan recorriendo `steps` por su `key` (no por número fijo), para que las validaciones sigan correctas cuando faltan pasos.
+6. Si por algún motivo `current` queda fuera de rango tras un cambio de datos (caso raro), forzar `setCurrent(Math.min(current, steps.length))` con un `useEffect`.
 
 ## Fuera de alcance
-
-- No se cambia el esquema de BD ni la API admin.
-- No se añaden subidas de imágenes ni nuevos campos de personalización.
-- Lógica de precio se mantiene (`computePrice` con multiplicador del tamaño).
+- No se toca el editor admin ni la base de datos.
+- No se cambian los componentes de paso individuales (`StepFlavors`, `StepCovering`, etc.).
+- No se cambia la lógica de precio ni el carrito.

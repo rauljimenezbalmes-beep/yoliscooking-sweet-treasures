@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useProduct } from "@/data/products-store";
@@ -45,14 +45,13 @@ export const Route = createFileRoute("/pasteles/$id/personalizar")({
   ),
 });
 
-function getSteps(isBizcocho: boolean): WizardStep[] {
-  return [
-    { id: 1, label: "Sabores" },
-    { id: 2, label: isBizcocho ? "Cobertura" : "Relleno" },
-    { id: 3, label: "Decoración" },
-    { id: 4, label: "Detalles" },
-    { id: 5, label: "Resumen" },
-  ];
+type StepKey = "flavors" | "covering" | "decoration" | "details" | "summary";
+
+interface BuiltStep {
+  key: StepKey;
+  label: string;
+  render: () => ReactNode;
+  valid: boolean;
 }
 
 function PersonalizarRoute() {
@@ -73,10 +72,12 @@ function PersonalizarPage() {
   if (!product) throw notFound();
 
   const isBizcocho = product.category === "Bizcochos";
-  const steps = getSteps(isBizcocho);
 
+  const { options: flavorOpts } = useResolvedWizardOptions(product.id, "flavor");
   const { options: coveringOpts } = useResolvedWizardOptions(product.id, "covering");
   const { options: decoOpts } = useResolvedWizardOptions(product.id, "decoration");
+  const { options: themeOpts } = useResolvedWizardOptions(product.id, "theme");
+  const { options: colorOpts } = useResolvedWizardOptions(product.id, "color");
   const { options: sizeOpts } = useResolvedWizardOptions(product.id, "size");
 
   const minDeliveryOk = (() => {
@@ -88,25 +89,89 @@ function PersonalizarPage() {
     return d.getTime() >= min.getTime();
   })();
 
-  const stepValid: Record<number, boolean> = {
-    1: state.flavors.length >= 1,
-    2: coveringOpts.length === 0 || state.covering !== "",
-    3:
-      decoOpts.length === 0
-        ? true
-        : state.decoration !== "" &&
-          (state.decoration !== "personalizada" || state.colors.length > 0),
-    4: minDeliveryOk && (sizeOpts.length === 0 || state.sizeId !== ""),
-    5: true,
-  };
-  const completed = new Set<number>(
-    steps.filter((s) => s.id < current && stepValid[s.id]).map((s) => s.id),
-  );
+  const steps = useMemo<BuiltStep[]>(() => {
+    const list: BuiltStep[] = [];
+    if (flavorOpts.length > 0) {
+      list.push({
+        key: "flavors",
+        label: "Sabores",
+        render: () => <StepFlavors productId={product.id} />,
+        valid: state.flavors.length >= 1,
+      });
+    }
+    if (coveringOpts.length > 0) {
+      list.push({
+        key: "covering",
+        label: isBizcocho ? "Cobertura" : "Relleno",
+        render: () => <StepCovering productId={product.id} isBizcocho={isBizcocho} />,
+        valid: state.covering !== "",
+      });
+    }
+    if (decoOpts.length > 0 || themeOpts.length > 0 || colorOpts.length > 0) {
+      list.push({
+        key: "decoration",
+        label: "Decoración",
+        render: () => <StepDecoration productId={product.id} />,
+        valid:
+          decoOpts.length === 0
+            ? true
+            : state.decoration !== "" &&
+              (state.decoration !== "personalizada" || state.colors.length > 0),
+      });
+    }
+    list.push({
+      key: "details",
+      label: "Detalles",
+      render: () => <StepDetails productId={product.id} />,
+      valid: minDeliveryOk && (sizeOpts.length === 0 || state.sizeId !== ""),
+    });
+    list.push({
+      key: "summary",
+      label: "Resumen",
+      render: () => <StepSummary product={product} />,
+      valid: true,
+    });
+    return list;
+  }, [
+    product,
+    isBizcocho,
+    flavorOpts.length,
+    coveringOpts.length,
+    decoOpts.length,
+    themeOpts.length,
+    colorOpts.length,
+    sizeOpts.length,
+    state.flavors.length,
+    state.covering,
+    state.decoration,
+    state.colors.length,
+    state.sizeId,
+    minDeliveryOk,
+  ]);
 
+  useEffect(() => {
+    if (current > steps.length) setCurrent(steps.length);
+  }, [current, steps.length]);
+
+  const progressSteps: WizardStep[] = steps.map((s, i) => ({
+    id: i + 1,
+    label: s.label,
+  }));
+
+  const activeIndex = Math.min(current, steps.length) - 1;
+  const activeStep = steps[activeIndex];
+  const canGoNext = activeStep?.valid ?? false;
   const isLast = current === steps.length;
 
+  const completed = new Set<number>(
+    steps
+      .map((s, i) => ({ id: i + 1, valid: s.valid }))
+      .filter((s) => s.id < current && s.valid)
+      .map((s) => s.id),
+  );
+
   function handleNext() {
-    if (!stepValid[current]) return;
+    if (!canGoNext) return;
     if (isLast) {
       const sizeIdFinal =
         state.sizeId || (SIZES.find((s) => s.id === "pequeno") ? "pequeno" : "");
@@ -174,8 +239,8 @@ function PersonalizarPage() {
           </div>
           <div className="mt-4">
             <WizardProgress
-              steps={steps}
-              current={current}
+              steps={progressSteps}
+              current={activeIndex + 1}
               completed={completed}
               onJump={handleJump}
             />
@@ -184,14 +249,8 @@ function PersonalizarPage() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-        <div key={current} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          {current === 1 && <StepFlavors productId={product.id} />}
-          {current === 2 && (
-            <StepCovering productId={product.id} isBizcocho={isBizcocho} />
-          )}
-          {current === 3 && <StepDecoration productId={product.id} />}
-          {current === 4 && <StepDetails productId={product.id} />}
-          {current === 5 && <StepSummary product={product} />}
+        <div key={activeStep?.key ?? "empty"} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+          {activeStep?.render()}
         </div>
       </main>
 
@@ -199,7 +258,7 @@ function PersonalizarPage() {
         onBack={handleBack}
         onNext={handleNext}
         canGoBack={current > 1}
-        canGoNext={stepValid[current]}
+        canGoNext={canGoNext}
         isLast={isLast}
         nextLabel={isLast ? "Añadir al carrito" : "Continuar"}
       />
