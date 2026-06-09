@@ -169,3 +169,10 @@ function Row({ k, v }: { k: string; v: string }) {
     </div>
   );
 }
+
+function formatDeliveryDate(value: string | undefined | null): string {
+  if (!value) return "Sin fecha";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "Sin fecha";
+  return format(d, "d 'de' MMM yyyy", { locale: es });
+}
