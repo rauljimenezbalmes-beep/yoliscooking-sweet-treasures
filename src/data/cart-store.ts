@@ -169,6 +169,22 @@ export async function removeFromCart(id: string) {
   }
 }
 
+export async function updateCartItem(
+  id: string,
+  customization: CakeCustomization,
+  price: number,
+) {
+  state = state.map((i) => (i.id === id ? { ...i, customization, price } : i));
+  emit();
+  if (currentUserId && isUuid(id)) {
+    await supabase
+      .from("cart_items")
+      .update({ customization: customization as unknown as never, price })
+      .eq("id", id)
+      .eq("user_id", currentUserId);
+  }
+}
+
 export async function clearCart() {
   const wasUser = currentUserId;
   state = [];
