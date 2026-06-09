@@ -1,24 +1,41 @@
-## Objetivo
-Cuando el admin desactiva todas las etiquetas de un paso (sabores, cobertura/relleno, o decoración) para un pastel, ese paso desaparece en el wizard del cliente y la barra de progreso se reajusta automáticamente al nuevo número de pasos.
+## Problema real
 
-## Comportamiento por paso
+El carrito se rompe con "This page didn't load" porque `format(new Date(deliveryDate), …)` en `src/routes/carrito.tsx:141` lanza `RangeError: Invalid time value` cuando `deliveryDate` queda como string vacío (puede pasar si el paso "Detalles" se salta o se construye el item sin fecha válida). Esto hace que el cliente nunca pueda llegar al carrito a revisar/pagar lo que añadió.
 
-- **Sabores**: se oculta si no hay opciones de `flavor` resueltas.
-- **Cobertura/Relleno**: se oculta si no hay opciones de `covering` resueltas (ya se valida así, solo falta no contarlo como paso).
-- **Decoración**: se oculta si no hay opciones de `decoration` (ni `theme`/`color`) resueltas.
-- **Detalles**: siempre visible (la fecha de entrega es obligatoria). El selector de tamaño dentro del paso ya se adapta si no hay tamaños.
-- **Resumen**: siempre visible.
+Además, hoy el carrito vive solo en `localStorage` (`yoli.cart.v1`), así que se pierde al cambiar de navegador o dispositivo. El usuario quiere que esté **vinculado a la cuenta**.
 
-## Cambios técnicos (solo `src/routes/pasteles.$id.personalizar.tsx`)
+## Cambios
 
-1. Resolver también `flavor`, `theme`, `color` con `useResolvedWizardOptions` además de los actuales.
-2. Sustituir `getSteps(isBizcocho)` por una construcción dinámica que devuelva un array `steps` con `{ key, label, render, valid }`, donde `key ∈ {"flavors","covering","decoration","details","summary"}`. Solo se añaden los pasos con contenido (regla anterior).
-3. Asignar `id` numérico 1..N **después** de filtrar, para que `WizardProgress` siga recibiendo IDs consecutivos. La UI no necesita cambios.
-4. `current` sigue siendo numérico 1..N sobre el array filtrado. El renderizado pasa de `current === 1 && <StepFlavors/>` etc. a `steps[current-1].render()`.
-5. `stepValid` y `completed` se calculan recorriendo `steps` por su `key` (no por número fijo), para que las validaciones sigan correctas cuando faltan pasos.
-6. Si por algún motivo `current` queda fuera de rango tras un cambio de datos (caso raro), forzar `setCurrent(Math.min(current, steps.length))` con un `useEffect`.
+### 1. Arreglar el render del carrito (`src/routes/carrito.tsx`)
+- Añadir helper `formatDeliveryDate(value)` que valida con `isNaN(d.getTime())` y devuelve "Sin fecha" si no es válida; sustituir la llamada actual a `format`.
+- Sanitizar opcionalmente al cargar: si `it.customization.deliveryDate` no es parseable, mostrar el aviso pero no crashear.
+
+### 2. Asegurar fecha válida al añadir (`src/routes/pasteles.$id.personalizar.tsx`)
+- En `handleNext` (último paso), si `state.deliveryDate` está vacío, no añadir y mostrar un toast pidiendo completar la fecha. El paso "Detalles" ya valida `minDeliveryOk`, pero blindamos también el `addToCart`.
+
+### 3. Persistencia vinculada a la cuenta (Lovable Cloud)
+Nueva tabla `public.cart_items` con:
+- `user_id uuid` (FK lógica a `auth.users`, no FK física), `customization jsonb`, `price numeric`, `added_at timestamptz`
+- RLS: cada usuario ve/modifica solo sus filas (`auth.uid() = user_id`)
+- GRANTs a `authenticated` y `service_role`
+
+Modificar `src/data/cart-store.ts`:
+- Mantener el store reactivo actual (useSyncExternalStore) y `localStorage` como caché offline/invitado.
+- Al cargar la app, si hay sesión: leer `cart_items` del usuario y reemplazar el estado; suscribirse a `onAuthStateChange` para resincronizar al iniciar/cerrar sesión.
+- `addToCart` / `removeFromCart` / `clearCart`: si hay sesión, escribir también en Supabase (insert/delete) usando el cliente del navegador con RLS. Si no hay sesión, seguir solo en localStorage.
+- Al iniciar sesión por primera vez con items locales, hacer "merge": subir los items locales a la tabla y luego recargar desde la nube.
+
+### 4. UX en `/carrito`
+- Si el usuario no está autenticado, mostrar un aviso suave arriba: "Inicia sesión para guardar tu carrito en tu cuenta" con link a `/auth`. No bloquear el uso.
+- "Continuar al pago" sigue mostrando el toast "Próximamente" (fuera de alcance: pagos reales).
 
 ## Fuera de alcance
-- No se toca el editor admin ni la base de datos.
-- No se cambian los componentes de paso individuales (`StepFlavors`, `StepCovering`, etc.).
-- No se cambia la lógica de precio ni el carrito.
+- Integración real de pago.
+- Edición de un item ya en el carrito (solo eliminar/añadir nuevo).
+- Cambios en el wizard de pasos o en el admin.
+
+## Detalles técnicos
+
+- Cliente Supabase del navegador: `@/integrations/supabase/client` (RLS aplica como el usuario).
+- No se usa `createServerFn` ni `client.server`: el carrito es del propio usuario y RLS basta.
+- Migración crea la tabla con la estructura GRANT → RLS → POLICY estándar.
