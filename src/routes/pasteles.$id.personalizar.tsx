@@ -2,8 +2,10 @@ import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-ro
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import { useProduct } from "@/data/products-store";
-import { addToCart } from "@/data/cart-store";
+import { addToCart, updateCartItem, useCart } from "@/data/cart-store";
 import {
   computePrice,
   MIN_DELIVERY_DAYS,
@@ -13,6 +15,7 @@ import {
 import {
   CustomizationProvider,
   useCustomization,
+  type CustomizationState,
 } from "@/context/CustomizationContext";
 import { WizardProgress, type WizardStep } from "@/components/customization/WizardProgress";
 import { WizardFooter } from "@/components/customization/WizardFooter";
@@ -23,7 +26,12 @@ import { StepDetails } from "@/components/customization/steps/StepDetails";
 import { StepSummary } from "@/components/customization/steps/StepSummary";
 import { useResolvedWizardOptions } from "@/data/product-wizard-store";
 
+const searchSchema = z.object({
+  edit: fallback(z.string().optional(), undefined),
+});
+
 export const Route = createFileRoute("/pasteles/$id/personalizar")({
+  validateSearch: zodValidator(searchSchema),
   head: () => ({
     meta: [
       { title: `Personaliza tu pastel — La Cocina De Yoli` },
