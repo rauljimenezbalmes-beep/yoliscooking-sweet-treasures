@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2, Save, X } from "lucide-react";
-import { useWizardOptions, type WizardOptionType } from "@/data/wizard-options-store";
+import { useWizardOptions, type WizardOption, type WizardOptionType } from "@/data/wizard-options-store";
+import { useProduct } from "@/data/products-store";
 import {
   useProductWizardRows,
   useToggleGlobalForProduct,
   useCreateProductExtra,
   useUpdateProductExtra,
   useDeleteProductWizardRow,
+  useSetGlobalSizePrice,
   type ProductWizardOption,
 } from "@/data/product-wizard-store";
 
