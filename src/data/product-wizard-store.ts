@@ -80,12 +80,20 @@ export function useResolvedWizardOptions(
       .filter((g) => g.active && !disabledGlobalIds.has(g.id))
       .map((g) => {
         const ov = overrideByGlobalId.get(g.id);
+        const gExtra =
+          g.extra && typeof g.extra === "object" && !Array.isArray(g.extra)
+            ? (g.extra as Record<string, unknown>)
+            : {};
+        const oExtra =
+          ov?.extra && typeof ov.extra === "object" && !Array.isArray(ov.extra)
+            ? (ov.extra as Record<string, unknown>)
+            : {};
         return {
           key: `g:${g.id}`,
           label: g.label,
           value: g.value,
           description: g.description,
-          extra: g.extra,
+          extra: { ...gExtra, ...oExtra } as Json,
           source: "global" as const,
           sort: ov?.sort_order ?? g.sort_order,
         };
