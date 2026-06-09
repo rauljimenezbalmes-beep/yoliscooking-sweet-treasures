@@ -88,6 +88,7 @@ function EditarPastel() {
         </h1>
       </div>
       <CakeForm product={product} mode="edit" />
+      <ProductWizardEditor productId={product.id} />
     </section>
   );
 }
