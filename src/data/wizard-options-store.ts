@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 export type WizardOptionType = "flavor" | "covering" | "theme" | "color" | "size" | "decoration";
 
@@ -9,7 +10,7 @@ export interface WizardOption {
   label: string;
   value: string | null;
   description: string | null;
-  extra: Record<string, unknown>;
+  extra: Json;
   sort_order: number;
   active: boolean;
 }
