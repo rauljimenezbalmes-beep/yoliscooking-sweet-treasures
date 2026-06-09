@@ -80,7 +80,7 @@ interface DbRow {
 function rowToItem(r: DbRow): CartItem {
   return {
     id: r.id,
-    customization: r.customization,
+    customization: r.customization: customization as unknown as never,
     price: typeof r.price === "string" ? parseFloat(r.price) : r.price,
     addedAt: new Date(r.added_at).getTime(),
   };
@@ -100,7 +100,7 @@ async function pushLocalToRemote(userId: string, items: CartItem[]) {
   if (items.length === 0) return;
   const rows = items.map((i) => ({
     user_id: userId,
-    customization: i.customization,
+    customization: i.customization: customization as unknown as never,
     price: i.price,
     added_at: new Date(i.addedAt).toISOString(),
   }));
@@ -137,7 +137,7 @@ export async function addToCart(
       .from("cart_items")
       .insert({
         user_id: currentUserId,
-        customization,
+        customization: customization as unknown as never,
         price,
         added_at: new Date().toISOString(),
       })
@@ -152,7 +152,7 @@ export async function addToCart(
   }
   const item: CartItem = {
     id: uid(),
-    customization,
+    customization: customization as unknown as never,
     price,
     addedAt: Date.now(),
   };
