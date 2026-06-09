@@ -5,6 +5,7 @@ import yoli2 from "@/assets/yoli-2.jpg";
 import yoli3 from "@/assets/yoli-3.jpg";
 import yoli4 from "@/assets/yoli-4.jpg";
 import { ArrowRight, Heart } from "lucide-react";
+import { CatalogoPasteles } from "@/components/CatalogoPasteles";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -84,6 +85,13 @@ function Home() {
           </div>
         </div>
       </section>
+
+      {/* Catálogo */}
+      <CatalogoPasteles
+        eyebrow="Nuestro catálogo"
+        title="Mis Pasteles"
+        subtitle="Explora todas las tartas, bizcochos y dulces de temporada de Yoli."
+      />
 
       {/* Historia */}
       <section id="historia" className="mx-auto max-w-4xl px-4 py-20 sm:px-6">
