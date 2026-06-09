@@ -342,6 +342,7 @@ function ExtrasManager({
               productId={productId}
               showValue={showValue}
               showDescription={showDescription}
+              showPrice={type === "size"}
             />
           ))}
         </ul>
