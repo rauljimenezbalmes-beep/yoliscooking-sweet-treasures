@@ -10,6 +10,7 @@ import {
   computePrice,
   MIN_DELIVERY_DAYS,
   SIZES,
+  resolveWizardPrice,
   type CakeCustomization,
 } from "@/data/customization";
 import {
