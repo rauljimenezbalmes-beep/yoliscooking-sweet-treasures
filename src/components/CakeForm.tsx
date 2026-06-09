@@ -1,16 +1,31 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import type { Product, Category } from "@/data/products";
 import { categories } from "@/data/products";
-import { updateProduct } from "@/data/products-store";
-import { Save, ArrowLeft, X, Plus, Check } from "lucide-react";
+import { useUpdateProduct, useCreateProduct, useDeleteProduct } from "@/data/products-store";
+import { Save, ArrowLeft, X, Plus, Check, Trash2 } from "lucide-react";
 
 interface CakeFormProps {
   product: Product;
+  mode?: "edit" | "create";
 }
 
-export function CakeForm({ product }: CakeFormProps) {
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60) || `pastel-${Date.now()}`;
+}
+
+export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
   const navigate = useNavigate();
+  const updateMut = useUpdateProduct();
+  const createMut = useCreateProduct();
+  const deleteMut = useDeleteProduct();
   const [name, setName] = useState(product.name);
   const [description, setDescription] = useState(product.description);
   const [price, setPrice] = useState(String(product.price));
@@ -23,7 +38,6 @@ export function CakeForm({ product }: CakeFormProps) {
   const [newTag, setNewTag] = useState("");
   const [saved, setSaved] = useState(false);
 
-  // Sync when product changes (e.g. navigating between ids)
   useEffect(() => {
     setName(product.name);
     setDescription(product.description);
@@ -33,11 +47,12 @@ export function CakeForm({ product }: CakeFormProps) {
     setIngredients(product.ingredients);
     setTags(product.tags);
     setActive(product.active);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    updateProduct(product.id, {
+    const payload = {
       name: name.trim(),
       description: description.trim(),
       price: Number(price) || 0,
@@ -46,9 +61,33 @@ export function CakeForm({ product }: CakeFormProps) {
       ingredients,
       tags,
       active,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    };
+    try {
+      if (mode === "create") {
+        const id = slugify(name);
+        await createMut.mutateAsync({ id, ...payload });
+        toast.success("Pastel creado");
+        navigate({ to: "/admin/pasteles" });
+      } else {
+        await updateMut.mutateAsync({ id: product.id, patch: payload });
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+        toast.success("Cambios guardados");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al guardar");
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm(`¿Eliminar "${product.name}"? Esta acción no se puede deshacer.`)) return;
+    try {
+      await deleteMut.mutateAsync(product.id);
+      toast.success("Pastel eliminado");
+      navigate({ to: "/admin/pasteles" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al eliminar");
+    }
   }
 
   function addIngredient() {
@@ -73,9 +112,11 @@ export function CakeForm({ product }: CakeFormProps) {
     reader.readAsDataURL(file);
   }
 
+  const submitting = updateMut.isPending || createMut.isPending;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => navigate({ to: "/admin/pasteles" })}
@@ -83,23 +124,33 @@ export function CakeForm({ product }: CakeFormProps) {
         >
           <ArrowLeft className="h-4 w-4" /> Volver al listado
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {saved && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-sm text-primary">
               <Check className="h-4 w-4" /> Guardado
             </span>
           )}
+          {mode === "edit" && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleteMut.isPending}
+              className="inline-flex items-center gap-2 rounded-full border border-destructive/30 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-60"
+            >
+              <Trash2 className="h-4 w-4" /> Eliminar
+            </button>
+          )}
           <button
             type="submit"
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-card transition-all hover:-translate-y-0.5 hover:shadow-soft"
+            disabled={submitting}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-card transition-all hover:-translate-y-0.5 hover:shadow-soft disabled:opacity-60"
           >
-            <Save className="h-4 w-4" /> Guardar cambios
+            <Save className="h-4 w-4" /> {mode === "create" ? "Crear pastel" : "Guardar cambios"}
           </button>
         </div>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_1.4fr]">
-        {/* Imagen */}
         <div className="space-y-4">
           <label className="block text-sm font-medium text-foreground">Imagen</label>
           <div className="aspect-square overflow-hidden rounded-2xl bg-muted ring-1 ring-border">
@@ -130,7 +181,6 @@ export function CakeForm({ product }: CakeFormProps) {
           </label>
         </div>
 
-        {/* Datos */}
         <div className="space-y-5">
           <Field label="Nombre">
             <input

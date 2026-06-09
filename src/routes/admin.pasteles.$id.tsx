@@ -1,14 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useProduct } from "@/data/products-store";
 import { CakeForm } from "@/components/CakeForm";
+import type { Product } from "@/data/products";
 
 export const Route = createFileRoute("/admin/pasteles/$id")({
   head: ({ params }) => ({
     meta: [
-      { title: `Editar pastel — La Cocina De Yoli` },
+      {
+        title:
+          params.id === "new"
+            ? "Nuevo pastel — La Cocina De Yoli"
+            : `Editar pastel — La Cocina De Yoli`,
+      },
       {
         name: "description",
-        content: `Edición del pastel ${params.id}: nombre, precio, ingredientes, imagen y disponibilidad.`,
+        content:
+          params.id === "new"
+            ? "Crea un nuevo pastel: nombre, precio, ingredientes e imagen."
+            : `Edición del pastel ${params.id}: nombre, precio, ingredientes, imagen y disponibilidad.`,
       },
       { name: "robots", content: "noindex" },
     ],
@@ -16,9 +25,39 @@ export const Route = createFileRoute("/admin/pasteles/$id")({
   component: EditarPastel,
 });
 
+const EMPTY_PRODUCT: Product = {
+  id: "",
+  name: "",
+  description: "",
+  image:
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><rect width='100%25' height='100%25' fill='%23efe4f3'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23a07cb0'>Sin imagen</text></svg>",
+  category: "Tartas",
+  price: 0,
+  ingredients: [],
+  tags: [],
+  active: true,
+};
+
 function EditarPastel() {
   const { id } = Route.useParams();
+  const isNew = id === "new";
   const product = useProduct(id);
+
+  if (isNew) {
+    return (
+      <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+        <div className="mb-8">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+            Nuevo pastel
+          </span>
+          <h1 className="mt-2 font-display text-4xl text-foreground sm:text-5xl">
+            Añadir un nuevo pastel
+          </h1>
+        </div>
+        <CakeForm product={EMPTY_PRODUCT} mode="create" />
+      </section>
+    );
+  }
 
   if (!product) {
     return (
@@ -47,7 +86,7 @@ function EditarPastel() {
           {product.name}
         </h1>
       </div>
-      <CakeForm product={product} />
+      <CakeForm product={product} mode="edit" />
     </section>
   );
 }

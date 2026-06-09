@@ -1,59 +1,88 @@
-import { useSyncExternalStore } from "react";
-import { defaultProducts, type Product } from "./products";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { Product, Category } from "./products";
 
-const STORAGE_KEY = "yoli.products.v1";
+// Static default images for the seeded products so we keep the original assets
+// regardless of what is stored in the DB image column.
+import redVelvet from "@/assets/cake-red-velvet.jpg";
+import manzana from "@/assets/cake-manzana.jpg";
+import queso from "@/assets/cake-queso.jpg";
+import sacher from "@/assets/cake-sacher.jpg";
+import bizTradicional from "@/assets/bizcocho-tradicional.jpg";
+import bizLimon from "@/assets/bizcocho-limon.jpg";
+import bizAlmendra from "@/assets/bizcocho-almendra.jpg";
+import bizNaranja from "@/assets/bizcocho-naranja.jpg";
+import roscon from "@/assets/roscon.jpg";
+import santiago from "@/assets/santiago.jpg";
+import brazo from "@/assets/brazo-gitano.jpg";
+import coca from "@/assets/coca.jpg";
 
-function isBrowser() {
-  return typeof window !== "undefined" && typeof localStorage !== "undefined";
+const DEFAULT_IMAGES: Record<string, string> = {
+  "red-velvet": redVelvet,
+  manzana,
+  queso,
+  sacher,
+  "bizcocho-tradicional": bizTradicional,
+  "bizcocho-limon": bizLimon,
+  "bizcocho-almendra": bizAlmendra,
+  "bizcocho-naranja": bizNaranja,
+  roscon,
+  santiago,
+  "brazo-gitano": brazo,
+  coca,
+};
+
+const PLACEHOLDER_IMAGE =
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><rect width='100%25' height='100%25' fill='%23efe4f3'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23a07cb0'>Sin imagen</text></svg>";
+
+function resolveImage(id: string, dbImage: string): string {
+  if (dbImage && !dbImage.startsWith("/src/")) return dbImage;
+  return DEFAULT_IMAGES[id] ?? PLACEHOLDER_IMAGE;
 }
 
-function load(): Product[] {
-  if (!isBrowser()) return defaultProducts;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultProducts;
-    const parsed = JSON.parse(raw) as Product[];
-    if (!Array.isArray(parsed) || parsed.length === 0) return defaultProducts;
-    // Merge: ensure new default products appear if added later
-    const map = new Map(parsed.map((p) => [p.id, p]));
-    for (const def of defaultProducts) {
-      if (!map.has(def.id)) map.set(def.id, def);
-    }
-    return Array.from(map.values());
-  } catch {
-    return defaultProducts;
-  }
+interface DbProduct {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  category: string;
+  price: number;
+  ingredients: string[];
+  tags: string[];
+  active: boolean;
+  sort_order: number;
 }
 
-let state: Product[] = load();
-const listeners = new Set<() => void>();
-
-function emit() {
-  if (isBrowser()) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      /* ignore quota errors */
-    }
-  }
-  for (const l of listeners) l();
+function mapRow(row: DbProduct): Product {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description ?? "",
+    image: resolveImage(row.id, row.image ?? ""),
+    category: row.category as Category,
+    price: Number(row.price),
+    ingredients: row.ingredients ?? [],
+    tags: row.tags ?? [],
+    active: row.active,
+  };
 }
 
-function subscribe(cb: () => void) {
-  listeners.add(cb);
-  return () => listeners.delete(cb);
-}
-
-function getSnapshot() {
-  return state;
-}
-
-function getServerSnapshot() {
-  return defaultProducts;
+async function fetchProducts(): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return (data as DbProduct[]).map(mapRow);
 }
 
 export function useProducts(): Product[] {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const { data } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+    staleTime: 30_000,
+  });
+  return data ?? [];
 }
 
 export function useProduct(id: string): Product | undefined {
@@ -61,12 +90,66 @@ export function useProduct(id: string): Product | undefined {
   return all.find((p) => p.id === id);
 }
 
-export function updateProduct(id: string, patch: Partial<Omit<Product, "id">>) {
-  state = state.map((p) => (p.id === id ? { ...p, ...patch } : p));
-  emit();
+export function useUpdateProduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Omit<Product, "id">> }) => {
+      const { error } = await supabase
+        .from("products")
+        .update({
+          ...(patch.name !== undefined && { name: patch.name }),
+          ...(patch.description !== undefined && { description: patch.description }),
+          ...(patch.image !== undefined && { image: patch.image }),
+          ...(patch.category !== undefined && { category: patch.category }),
+          ...(patch.price !== undefined && { price: patch.price }),
+          ...(patch.ingredients !== undefined && { ingredients: patch.ingredients }),
+          ...(patch.tags !== undefined && { tags: patch.tags }),
+          ...(patch.active !== undefined && { active: patch.active }),
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["products"] }),
+  });
 }
 
+export function useCreateProduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (product: Product) => {
+      const { error } = await supabase.from("products").insert({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        image: product.image,
+        category: product.category,
+        price: product.price,
+        ingredients: product.ingredients,
+        tags: product.tags,
+        active: product.active,
+        sort_order: 999,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["products"] }),
+  });
+}
+
+export function useDeleteProduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("products").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["products"] }),
+  });
+}
+
+// Back-compat: keep these around but make them no-ops / unused.
+export function updateProduct() {
+  console.warn("updateProduct() is deprecated. Use useUpdateProduct() mutation.");
+}
 export function resetProducts() {
-  state = defaultProducts;
-  emit();
+  console.warn("resetProducts() is deprecated.");
 }

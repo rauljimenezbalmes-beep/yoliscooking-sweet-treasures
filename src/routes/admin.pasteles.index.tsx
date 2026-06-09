@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, RotateCcw } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { categories } from "@/data/products";
-import { useProducts, resetProducts } from "@/data/products-store";
+import { useProducts } from "@/data/products-store";
 import { CakeList } from "@/components/CakeList";
 
 export const Route = createFileRoute("/admin/pasteles/")({
@@ -14,6 +14,7 @@ export const Route = createFileRoute("/admin/pasteles/")({
         content:
           "Panel de gestión de pasteles: edita nombre, precio, descripción, ingredientes e imagen de cada pastel.",
       },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: AdminPasteles,
@@ -48,21 +49,16 @@ function AdminPasteles() {
             Gestión de pasteles
           </h1>
           <p className="mt-2 max-w-xl text-muted-foreground">
-            Edita cada pastel de forma independiente. Los cambios se guardan al instante en este
-            navegador.
+            Edita, añade o elimina pasteles. Los cambios se guardan en la base de datos.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            if (confirm("¿Restablecer todos los pasteles a los valores originales?")) {
-              resetProducts();
-            }
-          }}
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        <Link
+          to="/admin/pasteles/$id"
+          params={{ id: "new" }}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-card transition-all hover:-translate-y-0.5 hover:shadow-soft"
         >
-          <RotateCcw className="h-3.5 w-3.5" /> Restablecer
-        </button>
+          <Plus className="h-4 w-4" /> Nuevo pastel
+        </Link>
       </div>
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
