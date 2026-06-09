@@ -219,7 +219,7 @@ export function useUpdateProductExtra() {
       patch: Partial<
         Pick<
           ProductWizardOption,
-          "label" | "value" | "description" | "enabled" | "sort_order"
+          "label" | "value" | "description" | "enabled" | "sort_order" | "extra"
         >
       >;
     }) => {
@@ -242,6 +242,58 @@ export function useDeleteProductWizardRow() {
         .from("product_wizard_options")
         .delete()
         .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) =>
+      qc.invalidateQueries({ queryKey: ["product-wizard", vars.productId] }),
+  });
+}
+
+/**
+ * Fija (o limpia) un precio explícito para un tamaño global de un pastel.
+ * Si la fila override no existe, la crea con enabled=true.
+ */
+export function useSetGlobalSizePrice() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      productId,
+      global,
+      existing,
+      price,
+    }: {
+      productId: string;
+      global: WizardOption;
+      existing?: ProductWizardOption;
+      price: number | null;
+    }) => {
+      const baseExtra =
+        existing?.extra && typeof existing.extra === "object" && !Array.isArray(existing.extra)
+          ? { ...(existing.extra as Record<string, unknown>) }
+          : {};
+      if (price === null || !Number.isFinite(price) || price <= 0) {
+        delete baseExtra.price;
+      } else {
+        baseExtra.price = price;
+      }
+      if (existing) {
+        const { error } = await supabase
+          .from("product_wizard_options")
+          .update({ extra: baseExtra as Json })
+          .eq("id", existing.id);
+        if (error) throw error;
+        return;
+      }
+      // No hay override aún → solo creamos si hay precio a guardar.
+      if (price === null) return;
+      const { error } = await supabase.from("product_wizard_options").insert({
+        product_id: productId,
+        type: "size",
+        global_option_id: global.id,
+        enabled: true,
+        sort_order: global.sort_order,
+        extra: baseExtra as Json,
+      });
       if (error) throw error;
     },
     onSuccess: (_d, vars) =>
