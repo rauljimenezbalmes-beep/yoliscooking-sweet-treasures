@@ -1,31 +1,18 @@
-# Mostrar el catálogo en la página de inicio
-
 ## Objetivo
-Cuando un cliente entra en la web, después del hero verá el catálogo completo de productos (con buscador y agrupado por categoría) tal cual aparece en "Mis Pasteles". La sección "La historia de Yoli" se mantiene debajo.
+Añadir 3 botones de navegación rápida bajo el buscador de "Mis Pasteles" para saltar directamente a cada categoría: **Tartas**, **Bizcochos** y **Dulces de Temporada**.
 
-## Cambios
+## Cambios propuestos
 
-### 1. Extraer el catálogo a un componente reutilizable
-Crear `src/components/CatalogoPasteles.tsx` con la lógica actual de `src/routes/mis-pasteles.tsx`:
-- Hook `useProducts()` + estado de búsqueda (`query`).
-- `filteredByCategory` y `totalMatches` (mismo `useMemo`).
-- Render del buscador y la cuadrícula por categoría con `<ProductCard>`.
-- Aceptará props opcionales para personalizar el encabezado (título, subtítulo, eyebrow) para poder reutilizarlo en la home con un texto adecuado, o sin encabezado si se prefiere.
+### 1. `src/components/CatalogoPasteles.tsx`
+- Añadir `id` único a cada `<section>` de categoría (ej. `id="cat-tartas"`, `id="cat-bizcochos"`, `id="cat-dulces-temporada"`).
+- Bajo el buscador, añadir una fila de botones estilo píldora que, al hacer clic, hagan `scrollIntoView({ behavior: 'smooth', block: 'start' })` al `id` correspondiente.
+- Mostrar solo los botones de categorías que tengan productos visibles (respetando el filtro de búsqueda actual).
+- Ocultar los botones cuando el usuario esté escribiendo en el buscador (opcional, a determinar).
 
-### 2. Actualizar `src/routes/mis-pasteles.tsx`
-Sustituir el cuerpo por el nuevo `<CatalogoPasteles />` manteniendo el mismo encabezado actual ("Catálogo artesanal / Mis Pasteles / Todas las tartas…"). El resultado visual no cambia.
+### 2. Estilo
+- Botones con bordes redondeados, fondo sutil (ej. `bg-accent/40` o `bg-secondary/30`), texto pequeño/medium.
+- Alinearlos centrados bajo el buscador con un pequeño gap.
+- Estado hover sutil para feedback.
 
-### 3. Actualizar `src/routes/index.tsx`
-Reordenar las secciones para que queden así:
-1. Hero (sin cambios).
-2. **Nueva sección de catálogo**: `<CatalogoPasteles />` con encabezado breve adaptado a la home (p. ej. "Nuestro catálogo / Mis Pasteles / buscador + productos por categoría").
-3. Historia de Yoli (sin cambios).
-4. CTA secundario (sin cambios) — opcionalmente se puede mantener tal cual, ya que ahora el catálogo está visible arriba.
-
-No se tocan precios, datos de producto, ni la lógica de `ProductCard`. Solo presentación/estructura de página.
-
-## Verificación
-- En `/` aparece el buscador y todos los productos agrupados por Tartas / Bizcochos / Dulces de Temporada, igual que en `/mis-pasteles`.
-- El buscador filtra correctamente en la home.
-- `/mis-pasteles` sigue funcionando idéntico.
-- No hay errores de consola.
+## Resultado esperado
+El cliente entra en "Mis Pasteles", ve el buscador y justo debajo 3 botones claros. Al pulsar uno, la página desplaza suavemente hasta el inicio de esa categoría, facilitando la navegación cuando hay muchos productos.
