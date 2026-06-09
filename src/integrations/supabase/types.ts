@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      cart_items: {
+        Row: {
+          added_at: string
+          created_at: string
+          customization: Json
+          id: string
+          price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          created_at?: string
+          customization: Json
+          id?: string
+          price?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          created_at?: string
+          customization?: Json
+          id?: string
+          price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_wizard_options: {
         Row: {
           created_at: string

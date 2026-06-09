@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useCart, removeFromCart, clearCart } from "@/data/cart-store";
 import { useProducts } from "@/data/products-store";
 import { sizeLabel } from "@/data/customization";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/carrito")({
   head: () => ({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/carrito")({
 function CartPage() {
   const items = useCart();
   const products = useProducts();
+  const { user } = useAuth();
   const total = items.reduce((s, i) => s + i.price, 0);
 
   if (items.length === 0) {
@@ -59,6 +61,17 @@ function CartPage() {
           Vaciar carrito
         </button>
       </div>
+
+      {!user && (
+        <div className="mt-6 rounded-2xl bg-primary/5 p-4 text-sm ring-1 ring-primary/20">
+          <Link to="/auth" className="font-semibold text-primary underline">
+            Inicia sesión
+          </Link>{" "}
+          <span className="text-muted-foreground">
+            para guardar tu carrito en tu cuenta y verlo desde cualquier dispositivo.
+          </span>
+        </div>
+      )}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         <ul className="space-y-4 lg:col-span-2">
@@ -102,9 +115,7 @@ function CartPage() {
                     <Row k="Tamaño" v={sizeLabel(it.customization.sizeId)} />
                     <Row
                       k="Entrega"
-                      v={format(new Date(it.customization.deliveryDate), "d 'de' MMM yyyy", {
-                        locale: es,
-                      })}
+                      v={formatDeliveryDate(it.customization.deliveryDate)}
                     />
                   </dl>
                   <button
@@ -170,4 +181,11 @@ function Row({ k, v }: { k: string; v: string }) {
       <span className="truncate">{v}</span>
     </div>
   );
+}
+
+function formatDeliveryDate(value: string | undefined | null): string {
+  if (!value) return "Sin fecha";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "Sin fecha";
+  return format(d, "d 'de' MMM yyyy", { locale: es });
 }
