@@ -80,7 +80,7 @@ interface DbRow {
 function rowToItem(r: DbRow): CartItem {
   return {
     id: r.id,
-    customization: r.customization: customization as unknown as never,
+    customization: r.customization,
     price: typeof r.price === "string" ? parseFloat(r.price) : r.price,
     addedAt: new Date(r.added_at).getTime(),
   };
@@ -100,7 +100,7 @@ async function pushLocalToRemote(userId: string, items: CartItem[]) {
   if (items.length === 0) return;
   const rows = items.map((i) => ({
     user_id: userId,
-    customization: i.customization: customization as unknown as never,
+    customization: i.customization as unknown as never,
     price: i.price,
     added_at: new Date(i.addedAt).toISOString(),
   }));
