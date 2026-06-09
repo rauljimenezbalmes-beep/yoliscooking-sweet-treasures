@@ -2,8 +2,10 @@ import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-ro
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import { useProduct } from "@/data/products-store";
-import { addToCart } from "@/data/cart-store";
+import { addToCart, updateCartItem, useCart } from "@/data/cart-store";
 import {
   computePrice,
   MIN_DELIVERY_DAYS,
@@ -13,6 +15,7 @@ import {
 import {
   CustomizationProvider,
   useCustomization,
+  type CustomizationState,
 } from "@/context/CustomizationContext";
 import { WizardProgress, type WizardStep } from "@/components/customization/WizardProgress";
 import { WizardFooter } from "@/components/customization/WizardFooter";
@@ -23,7 +26,12 @@ import { StepDetails } from "@/components/customization/steps/StepDetails";
 import { StepSummary } from "@/components/customization/steps/StepSummary";
 import { useResolvedWizardOptions } from "@/data/product-wizard-store";
 
+const searchSchema = z.object({
+  edit: fallback(z.string().optional(), undefined),
+});
+
 export const Route = createFileRoute("/pasteles/$id/personalizar")({
+  validateSearch: zodValidator(searchSchema),
   head: () => ({
     meta: [
       { title: `Personaliza tu pastel — La Cocina De Yoli` },
@@ -55,19 +63,35 @@ interface BuiltStep {
 }
 
 function PersonalizarRoute() {
+  const { edit } = Route.useSearch();
+  const items = useCart();
+  const existing = edit ? items.find((i) => i.id === edit) : undefined;
+  const initial: Partial<CustomizationState> | undefined = existing
+    ? {
+        flavors: existing.customization.flavors,
+        covering: existing.customization.covering,
+        decoration: existing.customization.decoration,
+        colors: existing.customization.colors,
+        theme: existing.customization.theme ?? "",
+        description: existing.customization.description ?? "",
+        sizeId: existing.customization.sizeId,
+        deliveryDate: existing.customization.deliveryDate || undefined,
+      }
+    : undefined;
   return (
-    <CustomizationProvider>
-      <PersonalizarPage />
+    <CustomizationProvider initial={initial}>
+      <PersonalizarPage editId={edit} />
     </CustomizationProvider>
   );
 }
 
-function PersonalizarPage() {
+function PersonalizarPage({ editId }: { editId?: string }) {
   const { id } = Route.useParams();
   const product = useProduct(id);
   const navigate = useNavigate();
   const { state } = useCustomization();
   const [current, setCurrent] = useState<number>(1);
+  const isEditing = !!editId;
 
   if (!product) throw notFound();
 
@@ -195,8 +219,13 @@ function PersonalizarPage() {
         SIZES.find((s) => s.id === sizeIdFinal) ? sizeIdFinal : "pequeno",
         customization.decoration,
       );
-      await addToCart(customization, price);
-      toast.success("¡Pastel añadido al carrito!");
+      if (isEditing && editId) {
+        await updateCartItem(editId, customization, price);
+        toast.success("Pastel actualizado.");
+      } else {
+        await addToCart(customization, price);
+        toast.success("¡Pastel añadido al carrito!");
+      }
       navigate({ to: "/carrito" });
       return;
     }
@@ -235,7 +264,7 @@ function PersonalizarPage() {
               />
               <div className="hidden text-right sm:block">
                 <p className="text-[10px] uppercase tracking-[0.18em] text-primary">
-                  Personalizando
+                  {isEditing ? "Editando" : "Personalizando"}
                 </p>
                 <p className="text-sm font-semibold text-foreground">{product.name}</p>
               </div>
@@ -264,7 +293,7 @@ function PersonalizarPage() {
         canGoBack={current > 1}
         canGoNext={canGoNext}
         isLast={isLast}
-        nextLabel={isLast ? "Añadir al carrito" : "Continuar"}
+        nextLabel={isLast ? (isEditing ? "Guardar cambios" : "Añadir al carrito") : "Continuar"}
       />
     </div>
   );
