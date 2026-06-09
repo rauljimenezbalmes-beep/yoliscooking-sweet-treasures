@@ -170,9 +170,13 @@ function PersonalizarPage() {
       .map((s) => s.id),
   );
 
-  function handleNext() {
+  async function handleNext() {
     if (!canGoNext) return;
     if (isLast) {
+      if (!state.deliveryDate || !minDeliveryOk) {
+        toast.error("Selecciona una fecha de entrega válida en el paso Detalles.");
+        return;
+      }
       const sizeIdFinal =
         state.sizeId || (SIZES.find((s) => s.id === "pequeno") ? "pequeno" : "");
       const customization: CakeCustomization = {
@@ -184,14 +188,14 @@ function PersonalizarPage() {
         theme: state.theme || undefined,
         description: state.description || undefined,
         sizeId: sizeIdFinal,
-        deliveryDate: state.deliveryDate ?? "",
+        deliveryDate: state.deliveryDate,
       };
       const price = computePrice(
         product!.price,
         SIZES.find((s) => s.id === sizeIdFinal) ? sizeIdFinal : "pequeno",
         customization.decoration,
       );
-      addToCart(customization, price);
+      await addToCart(customization, price);
       toast.success("¡Pastel añadido al carrito!");
       navigate({ to: "/carrito" });
       return;
