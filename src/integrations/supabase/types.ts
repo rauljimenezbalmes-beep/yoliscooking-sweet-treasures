@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      product_wizard_options: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          extra: Json
+          global_option_id: string | null
+          id: string
+          label: string | null
+          product_id: string
+          sort_order: number
+          type: Database["public"]["Enums"]["wizard_option_type"]
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          extra?: Json
+          global_option_id?: string | null
+          id?: string
+          label?: string | null
+          product_id: string
+          sort_order?: number
+          type: Database["public"]["Enums"]["wizard_option_type"]
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          extra?: Json
+          global_option_id?: string | null
+          id?: string
+          label?: string | null
+          product_id?: string
+          sort_order?: number
+          type?: Database["public"]["Enums"]["wizard_option_type"]
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_wizard_options_global_option_id_fkey"
+            columns: ["global_option_id"]
+            isOneToOne: false
+            referencedRelation: "wizard_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_wizard_options_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           active: boolean
