@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import type { CakeCustomization } from "./customization";
 
 const STORAGE_KEY = "yoli.cart.v1";
@@ -27,16 +28,20 @@ function load(): CartItem[] {
 }
 
 let state: CartItem[] = load();
+let currentUserId: string | null = null;
 const listeners = new Set<() => void>();
 
-function emit() {
-  if (isBrowser()) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      /* ignore */
-    }
+function persistLocal() {
+  if (!isBrowser()) return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    /* ignore */
   }
+}
+
+function emit() {
+  persistLocal();
   for (const l of listeners) l();
 }
 
@@ -65,7 +70,86 @@ function uid() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function addToCart(customization: CakeCustomization, price: number): CartItem {
+interface DbRow {
+  id: string;
+  customization: CakeCustomization;
+  price: number | string;
+  added_at: string;
+}
+
+function rowToItem(r: DbRow): CartItem {
+  return {
+    id: r.id,
+    customization: r.customization,
+    price: typeof r.price === "string" ? parseFloat(r.price) : r.price,
+    addedAt: new Date(r.added_at).getTime(),
+  };
+}
+
+async function fetchRemote(userId: string): Promise<CartItem[]> {
+  const { data, error } = await supabase
+    .from("cart_items")
+    .select("id, customization, price, added_at")
+    .eq("user_id", userId)
+    .order("added_at", { ascending: true });
+  if (error || !data) return [];
+  return (data as unknown as DbRow[]).map(rowToItem);
+}
+
+async function pushLocalToRemote(userId: string, items: CartItem[]) {
+  if (items.length === 0) return;
+  const rows = items.map((i) => ({
+    user_id: userId,
+    customization: i.customization,
+    price: i.price,
+    added_at: new Date(i.addedAt).toISOString(),
+  }));
+  await supabase.from("cart_items").insert(rows);
+}
+
+export async function syncCartForUser(userId: string | null) {
+  currentUserId = userId;
+  if (!userId) {
+    // Signed out: keep local cart as-is.
+    return;
+  }
+  // Merge any local items first (anonymous → signed-in)
+  const localOnly = state.filter((i) => !isUuid(i.id));
+  if (localOnly.length > 0) {
+    await pushLocalToRemote(userId, localOnly);
+  }
+  // Replace state with remote truth
+  const remote = await fetchRemote(userId);
+  state = remote;
+  emit();
+}
+
+function isUuid(s: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+}
+
+export async function addToCart(
+  customization: CakeCustomization,
+  price: number,
+): Promise<CartItem> {
+  if (currentUserId) {
+    const { data, error } = await supabase
+      .from("cart_items")
+      .insert({
+        user_id: currentUserId,
+        customization,
+        price,
+        added_at: new Date().toISOString(),
+      })
+      .select("id, customization, price, added_at")
+      .single();
+    if (!error && data) {
+      const item = rowToItem(data as unknown as DbRow);
+      state = [...state, item];
+      emit();
+      return item;
+    }
+  }
   const item: CartItem = {
     id: uid(),
     customization,
@@ -77,12 +161,35 @@ export function addToCart(customization: CakeCustomization, price: number): Cart
   return item;
 }
 
-export function removeFromCart(id: string) {
+export async function removeFromCart(id: string) {
   state = state.filter((i) => i.id !== id);
   emit();
+  if (currentUserId && isUuid(id)) {
+    await supabase.from("cart_items").delete().eq("id", id).eq("user_id", currentUserId);
+  }
 }
 
-export function clearCart() {
+export async function clearCart() {
+  const wasUser = currentUserId;
   state = [];
   emit();
+  if (wasUser) {
+    await supabase.from("cart_items").delete().eq("user_id", wasUser);
+  }
+}
+
+// Initialize sync on auth state changes (browser only).
+if (isBrowser()) {
+  supabase.auth.getSession().then(({ data }) => {
+    const uid = data.session?.user?.id ?? null;
+    if (uid) void syncCartForUser(uid);
+  });
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_IN") {
+      void syncCartForUser(session?.user?.id ?? null);
+    } else if (event === "SIGNED_OUT") {
+      currentUserId = null;
+      // Keep cart visible locally; user can sign in again to resync.
+    }
+  });
 }
