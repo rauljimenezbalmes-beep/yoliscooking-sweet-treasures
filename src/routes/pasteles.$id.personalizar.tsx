@@ -63,19 +63,35 @@ interface BuiltStep {
 }
 
 function PersonalizarRoute() {
+  const { edit } = Route.useSearch();
+  const items = useCart();
+  const existing = edit ? items.find((i) => i.id === edit) : undefined;
+  const initial: Partial<CustomizationState> | undefined = existing
+    ? {
+        flavors: existing.customization.flavors,
+        covering: existing.customization.covering,
+        decoration: existing.customization.decoration,
+        colors: existing.customization.colors,
+        theme: existing.customization.theme ?? "",
+        description: existing.customization.description ?? "",
+        sizeId: existing.customization.sizeId,
+        deliveryDate: existing.customization.deliveryDate || undefined,
+      }
+    : undefined;
   return (
-    <CustomizationProvider>
-      <PersonalizarPage />
+    <CustomizationProvider initial={initial}>
+      <PersonalizarPage editId={edit} />
     </CustomizationProvider>
   );
 }
 
-function PersonalizarPage() {
+function PersonalizarPage({ editId }: { editId?: string }) {
   const { id } = Route.useParams();
   const product = useProduct(id);
   const navigate = useNavigate();
   const { state } = useCustomization();
   const [current, setCurrent] = useState<number>(1);
+  const isEditing = !!editId;
 
   if (!product) throw notFound();
 
