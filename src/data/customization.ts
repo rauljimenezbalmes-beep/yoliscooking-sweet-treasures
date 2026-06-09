@@ -87,3 +87,40 @@ export function computePrice(basePrice: number, sizeId: string, decoration: Deco
 export function sizeLabel(sizeId: string): string {
   return SIZES.find((s) => s.id === sizeId)?.label ?? sizeId;
 }
+
+interface SizeOptLike {
+  label: string;
+  value: string | null;
+  extra: unknown;
+}
+
+/**
+ * Calcula precio usando los tamaños resueltos del admin.
+ * Prioridad: extra.price (override por tarta) > basePrice × extra.multiplier > fallback SIZES.
+ */
+export function resolveWizardPrice(
+  basePrice: number,
+  sizeOpts: SizeOptLike[],
+  sizeId: string,
+  decoration: DecorationType,
+): number {
+  const fee = decoration === "personalizada" ? CUSTOM_DECORATION_FEE : 0;
+  const sel = sizeOpts.find((o) => {
+    const id = (o.value ?? o.label).toLowerCase();
+    return id === sizeId || o.label === sizeId;
+  });
+  const extra =
+    sel && typeof sel.extra === "object" && sel.extra && !Array.isArray(sel.extra)
+      ? (sel.extra as Record<string, unknown>)
+      : null;
+  const overridePrice = extra ? Number(extra.price) : NaN;
+  if (Number.isFinite(overridePrice) && overridePrice > 0) {
+    return Math.round((overridePrice + fee) * 100) / 100;
+  }
+  const mult = extra ? Number(extra.multiplier) : NaN;
+  if (Number.isFinite(mult) && mult > 0) {
+    return Math.round((basePrice * mult + fee) * 100) / 100;
+  }
+  const fallbackId = SIZES.find((s) => s.id === sizeId) ? sizeId : "pequeno";
+  return computePrice(basePrice, fallbackId, decoration);
+}
