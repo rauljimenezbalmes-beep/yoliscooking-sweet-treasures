@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Trash2, ShoppingBag } from "lucide-react";
+import { Trash2, Pencil, ShoppingBag } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
@@ -118,17 +118,28 @@ function CartPage() {
                       v={formatDeliveryDate(it.customization.deliveryDate)}
                     />
                   </dl>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      removeFromCart(it.id);
-                      toast.success("Pastel eliminado del carrito.");
-                    }}
-                    className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-destructive"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Eliminar
-                  </button>
+                  <div className="mt-3 flex items-center gap-4">
+                    <Link
+                      to="/pasteles/$id/personalizar"
+                      params={{ id: it.customization.productId }}
+                      search={{ edit: it.id }}
+                      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-primary"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Editar
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        removeFromCart(it.id);
+                        toast.success("Pastel eliminado del carrito.");
+                      }}
+                      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
               </li>
             );
