@@ -7,7 +7,6 @@ import { z } from "zod";
 import { useProduct } from "@/data/products-store";
 import { addToCart, updateCartItem, useCart } from "@/data/cart-store";
 import {
-  computePrice,
   MIN_DELIVERY_DAYS,
   SIZES,
   resolveWizardPrice,
