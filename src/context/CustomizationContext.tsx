@@ -35,8 +35,14 @@ interface Ctx {
 
 const CustomizationCtx = createContext<Ctx | null>(null);
 
-export function CustomizationProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<CustomizationState>(DEFAULT_STATE);
+export function CustomizationProvider({
+  children,
+  initial,
+}: {
+  children: ReactNode;
+  initial?: Partial<CustomizationState>;
+}) {
+  const [state, setState] = useState<CustomizationState>({ ...DEFAULT_STATE, ...initial });
 
   function update<K extends keyof CustomizationState>(key: K, value: CustomizationState[K]) {
     setState((prev) => ({ ...prev, [key]: value }));
