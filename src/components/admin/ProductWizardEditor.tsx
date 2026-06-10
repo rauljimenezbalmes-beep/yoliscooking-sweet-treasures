@@ -577,7 +577,7 @@ function ExtraRowBody({
   }
 
   return (
-    <li className="flex flex-wrap items-center gap-3 rounded-xl bg-background p-3 ring-1 ring-border/60">
+    <div className="flex flex-1 flex-wrap items-center gap-3">
       {showValue && row.value && row.value.startsWith("#") && (
         <span
           className="h-8 w-8 shrink-0 rounded-full ring-1 ring-border"
