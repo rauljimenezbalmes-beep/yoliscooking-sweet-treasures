@@ -27,6 +27,11 @@ export interface Product {
   deliveryInfo: string;
 }
 
+export const DEFAULT_ALLERGENS_INFO = "Puede contener: gluten, lácteos, huevo y frutos secos.";
+export const DEFAULT_DELIVERY_INFO = "Mínimo 3 días desde el pedido.";
+
+
+
 export const defaultProducts: Product[] = [
   {
     id: "red-velvet",
