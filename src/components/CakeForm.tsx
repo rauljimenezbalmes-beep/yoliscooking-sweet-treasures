@@ -284,6 +284,26 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
               </button>
             </div>
           </Field>
+
+          <Field label="Información de alérgenos">
+            <textarea
+              value={allergensInfo}
+              onChange={(e) => setAllergensInfo(e.target.value)}
+              rows={2}
+              placeholder="Ej. Puede contener: gluten, lácteos, huevo y frutos secos."
+              className="w-full resize-none rounded-xl border border-border bg-background px-4 py-2.5 text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/20"
+            />
+          </Field>
+
+          <Field label="Tiempo de entrega">
+            <textarea
+              value={deliveryInfo}
+              onChange={(e) => setDeliveryInfo(e.target.value)}
+              rows={2}
+              placeholder="Ej. Mínimo 3 días desde el pedido."
+              className="w-full resize-none rounded-xl border border-border bg-background px-4 py-2.5 text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/20"
+            />
+          </Field>
         </div>
       </div>
     </form>
