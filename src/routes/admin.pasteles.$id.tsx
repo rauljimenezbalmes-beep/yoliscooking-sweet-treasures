@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useProduct } from "@/data/products-store";
 import { CakeForm } from "@/components/CakeForm";
 import { ProductWizardEditor } from "@/components/admin/ProductWizardEditor";
-import type { Product } from "@/data/products";
+import { DEFAULT_ALLERGENS_INFO, DEFAULT_DELIVERY_INFO, type Product } from "@/data/products";
 
 export const Route = createFileRoute("/admin/pasteles/$id")({
   head: ({ params }) => ({
@@ -37,6 +37,8 @@ const EMPTY_PRODUCT: Product = {
   ingredients: [],
   tags: [],
   active: true,
+  allergensInfo: DEFAULT_ALLERGENS_INFO,
+  deliveryInfo: DEFAULT_DELIVERY_INFO,
 };
 
 function EditarPastel() {

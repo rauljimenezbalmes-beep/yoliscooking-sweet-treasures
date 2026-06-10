@@ -34,6 +34,8 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
   const [ingredients, setIngredients] = useState<string[]>(product.ingredients);
   const [tags, setTags] = useState<string[]>(product.tags);
   const [active, setActive] = useState(product.active);
+  const [allergensInfo, setAllergensInfo] = useState(product.allergensInfo);
+  const [deliveryInfo, setDeliveryInfo] = useState(product.deliveryInfo);
   const [newIngredient, setNewIngredient] = useState("");
   const [newTag, setNewTag] = useState("");
   const [saved, setSaved] = useState(false);
@@ -47,6 +49,8 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
     setIngredients(product.ingredients);
     setTags(product.tags);
     setActive(product.active);
+    setAllergensInfo(product.allergensInfo);
+    setDeliveryInfo(product.deliveryInfo);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
@@ -61,6 +65,8 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
       ingredients,
       tags,
       active,
+      allergensInfo: allergensInfo.trim(),
+      deliveryInfo: deliveryInfo.trim(),
     };
     try {
       if (mode === "create") {
@@ -277,6 +283,26 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
                 <Plus className="h-4 w-4" /> Añadir
               </button>
             </div>
+          </Field>
+
+          <Field label="Información de alérgenos">
+            <textarea
+              value={allergensInfo}
+              onChange={(e) => setAllergensInfo(e.target.value)}
+              rows={2}
+              placeholder="Ej. Puede contener: gluten, lácteos, huevo y frutos secos."
+              className="w-full resize-none rounded-xl border border-border bg-background px-4 py-2.5 text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/20"
+            />
+          </Field>
+
+          <Field label="Tiempo de entrega">
+            <textarea
+              value={deliveryInfo}
+              onChange={(e) => setDeliveryInfo(e.target.value)}
+              rows={2}
+              placeholder="Ej. Mínimo 3 días desde el pedido."
+              className="w-full resize-none rounded-xl border border-border bg-background px-4 py-2.5 text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/20"
+            />
           </Field>
         </div>
       </div>

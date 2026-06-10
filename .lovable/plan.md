@@ -1,23 +1,42 @@
 ## Objetivo
 
-Dar permisos de administrador al usuario con correo `janet_jimenez_96@hotmail.com`.
+Que el admin pueda editar, desde el panel de cada pastel (`/admin/pasteles/:id`), dos textos que ahora están fijos en el código:
+
+- **Información de alérgenos** (ahora siempre dice "Puede contener: gluten, lácteos, huevo y frutos secos").
+- **Tiempo de entrega** (ahora siempre dice "Mínimo 3 días desde el pedido").
+
+Cada pastel guarda sus propios valores y se muestran en su ficha pública (`/pasteles/:id`).
 
 ## Pasos
 
-1. Verificar que existe un usuario registrado con ese correo en la base de datos (tabla `auth.users`). Si no existe, pedirle a esa persona que se registre primero en la web (`/auth`) antes de continuar.
-2. Insertar una fila en la tabla `user_roles` con ese `user_id` y el rol `admin`, usando `ON CONFLICT DO NOTHING` para que sea seguro re-ejecutarlo.
-3. Confirmar que el usuario ya aparece como admin (al iniciar sesión verá la pestaña "Admin" en la cabecera y podrá entrar a `/admin/pasteles`).
+1. **Base de datos** — añadir a la tabla `products` dos columnas nuevas:
+   - `allergens_info text` (texto libre, por defecto el texto actual).
+   - `delivery_info text` (texto libre, por defecto el texto actual).
+   Ambas no nulas con valor por defecto, así los pasteles existentes mantienen lo que se muestra hoy.
+
+2. **Modelo de datos en el código**:
+   - Añadir `allergensInfo` y `deliveryInfo` al tipo `Product` (`src/data/products.ts`).
+   - Mapear las nuevas columnas en `src/data/products-store.ts` (lectura, `useUpdateProduct`, `useCreateProduct`).
+
+3. **Formulario de admin** (`src/components/CakeForm.tsx`):
+   - Añadir dos campos `<textarea>` ("Información de alérgenos" y "Tiempo de entrega") con el resto de campos.
+   - Incluirlos en el `payload` de guardar/crear.
+
+4. **Ficha pública del pastel** (`src/routes/pasteles.$id.index.tsx`):
+   - Sustituir los textos fijos de las dos tarjetas ("Tiempo de entrega" e "Información alérgenos") por `product.deliveryInfo` y `product.allergensInfo`.
+
+5. No se cambia la lógica del wizard de personalización ni la validación de fecha mínima de entrega (sigue siendo `MIN_DELIVERY_DAYS`). El texto editable es solo informativo en la ficha del pastel.
 
 ## Detalles técnicos
 
-SQL aproximado a ejecutar:
+SQL de la migración:
 
 ```sql
-INSERT INTO public.user_roles (user_id, role)
-SELECT id, 'admin'
-FROM auth.users
-WHERE email = 'janet_jimenez_96@hotmail.com'
-ON CONFLICT (user_id, role) DO NOTHING;
+ALTER TABLE public.products
+  ADD COLUMN allergens_info text NOT NULL
+    DEFAULT 'Puede contener: gluten, lácteos, huevo y frutos secos.',
+  ADD COLUMN delivery_info text NOT NULL
+    DEFAULT 'Mínimo 3 días desde el pedido.';
 ```
 
-No se cambia código ni esquema, solo datos.
+Las políticas RLS existentes ya cubren estas columnas (admin puede `UPDATE`, todos pueden `SELECT`), no hace falta tocarlas.

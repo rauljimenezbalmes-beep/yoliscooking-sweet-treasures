@@ -23,9 +23,16 @@ export interface Product {
   ingredients: string[];
   tags: string[];
   active: boolean;
+  allergensInfo: string;
+  deliveryInfo: string;
 }
 
-export const defaultProducts: Product[] = [
+export const DEFAULT_ALLERGENS_INFO = "Puede contener: gluten, lácteos, huevo y frutos secos.";
+export const DEFAULT_DELIVERY_INFO = "Mínimo 3 días desde el pedido.";
+
+
+
+const seedProducts: Omit<Product, "allergensInfo" | "deliveryInfo">[] = [
   {
     id: "red-velvet",
     name: "Red Velvet",
@@ -159,5 +166,11 @@ export const defaultProducts: Product[] = [
     active: true,
   },
 ];
+
+export const defaultProducts: Product[] = seedProducts.map((p) => ({
+  ...p,
+  allergensInfo: DEFAULT_ALLERGENS_INFO,
+  deliveryInfo: DEFAULT_DELIVERY_INFO,
+}));
 
 export const categories: Category[] = ["Tartas", "Bizcochos", "Dulces de Temporada"];

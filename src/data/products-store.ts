@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Product, Category } from "./products";
+import { DEFAULT_ALLERGENS_INFO, DEFAULT_DELIVERY_INFO, type Product, type Category } from "./products";
 
 // Static default images for the seeded products so we keep the original assets
 // regardless of what is stored in the DB image column.
@@ -51,6 +51,8 @@ interface DbProduct {
   tags: string[];
   active: boolean;
   sort_order: number;
+  allergens_info: string | null;
+  delivery_info: string | null;
 }
 
 function mapRow(row: DbProduct): Product {
@@ -64,6 +66,8 @@ function mapRow(row: DbProduct): Product {
     ingredients: row.ingredients ?? [],
     tags: row.tags ?? [],
     active: row.active,
+    allergensInfo: row.allergens_info ?? DEFAULT_ALLERGENS_INFO,
+    deliveryInfo: row.delivery_info ?? DEFAULT_DELIVERY_INFO,
   };
 }
 
@@ -114,6 +118,8 @@ export function useUpdateProduct() {
           ...(patch.ingredients !== undefined && { ingredients: patch.ingredients }),
           ...(patch.tags !== undefined && { tags: patch.tags }),
           ...(patch.active !== undefined && { active: patch.active }),
+          ...(patch.allergensInfo !== undefined && { allergens_info: patch.allergensInfo }),
+          ...(patch.deliveryInfo !== undefined && { delivery_info: patch.deliveryInfo }),
         })
         .eq("id", id);
       if (error) throw error;
@@ -136,6 +142,8 @@ export function useCreateProduct() {
         ingredients: product.ingredients,
         tags: product.tags,
         active: product.active,
+        allergens_info: product.allergensInfo,
+        delivery_info: product.deliveryInfo,
         sort_order: 999,
       });
       if (error) throw error;

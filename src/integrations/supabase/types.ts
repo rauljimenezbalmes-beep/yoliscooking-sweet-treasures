@@ -107,8 +107,10 @@ export type Database = {
       products: {
         Row: {
           active: boolean
+          allergens_info: string
           category: string
           created_at: string
+          delivery_info: string
           description: string
           id: string
           image: string
@@ -121,8 +123,10 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          allergens_info?: string
           category: string
           created_at?: string
+          delivery_info?: string
           description?: string
           id: string
           image?: string
@@ -135,8 +139,10 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          allergens_info?: string
           category?: string
           created_at?: string
+          delivery_info?: string
           description?: string
           id?: string
           image?: string
