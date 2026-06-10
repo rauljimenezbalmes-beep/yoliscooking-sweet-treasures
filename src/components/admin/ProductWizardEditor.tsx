@@ -540,7 +540,10 @@ function ExtraRow({
       </div>
 
       {showPrice && !editing && (
-        <ExtraSizePriceInput row={row} productId={productId} />
+        <>
+          <ExtraSizePriceInput row={row} productId={productId} />
+          <ExtraSizePortionsLabelInput row={row} productId={productId} />
+        </>
       )}
 
       <div className="flex items-center gap-1">
