@@ -512,24 +512,6 @@ function ExtrasManager({
         </div>
       </div>
 
-      {extras.length === 0 ? (
-        <p className="mt-3 rounded-xl bg-muted/40 p-4 text-center text-sm text-muted-foreground">
-          Sin extras propios para este pastel.
-        </p>
-      ) : (
-        <ul className="mt-3 space-y-2">
-          {extras.map((row) => (
-            <ExtraRow
-              key={row.id}
-              row={row}
-              productId={productId}
-              showValue={showValue}
-              showDescription={showDescription}
-              showPrice={type === "size"}
-            />
-          ))}
-        </ul>
-      )}
     </div>
   );
 }
