@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Sparkles, Wheat } from "lucide-react";
 import { useProduct, useProductsLoading } from "@/data/products-store";
-import { SIZES, MIN_DELIVERY_DAYS } from "@/data/customization";
+import { SIZES } from "@/data/customization";
 
 export const Route = createFileRoute("/pasteles/$id/")({
   head: ({ params }) => ({
