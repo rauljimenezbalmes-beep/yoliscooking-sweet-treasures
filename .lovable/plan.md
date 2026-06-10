@@ -1,25 +1,29 @@
 ## Objetivo
 
-Que el admin pueda editar el texto de porciones que ve el cliente al elegir un tamaño de un pastel concreto (ej. cambiar "10 porciones" por "8-10 personas" o "Para una mesa de 12").
+Que la tabla "Tamaños y precio orientativo" de la ficha del pastel (`/pasteles/:id`) muestre los mismos valores que ve el cliente al personalizar: la **etiqueta de porciones** y el **precio** configurados por el admin para ese pastel concreto (no los `SIZES` fijos del código).
 
 ## Estado actual
 
-En el paso de tamaño del wizard, debajo de cada tamaño se muestra `"{portions} porciones"` (`src/components/customization/steps/StepDetails.tsx`), donde `portions` sale de `extra.portions` del tamaño global. No es editable por pastel ni se puede personalizar el texto.
+`src/routes/pasteles.$id.index.tsx` recorre la constante `SIZES` de `src/data/customization.ts` y muestra:
+- `{s.portions} porc.` (siempre el número fijo del código).
+- `(product.price * s.multiplier).toFixed(2) €` (siempre el cálculo automático, ignora precios fijados por el admin y los tamaños extra del pastel).
+
+Esto ignora todo lo que el admin configura en la pestaña Tamaños: precios concretos, etiquetas de porciones personalizadas, tamaños activados/desactivados y tamaños extra propios del pastel.
 
 ## Cambios
 
-1. **Tab "Tamaños" en `/admin/pasteles/:id`** (`src/components/admin/ProductWizardEditor.tsx`): junto al input de precio, añadir un campo de texto "Etiqueta de porciones" para cada tamaño (tanto los globales como los extras del pastel). Texto libre, opcional.
+1. **Sustituir la fuente de datos** de la lista por `useResolvedWizardOptions(product.id, "size")`, que ya combina globales activos + overrides del pastel + extras y respeta los flags `enabled`.
 
-2. **Guardado**: el valor va al JSON `extra` de la fila de `product_wizard_options` como `extra.portionsLabel` (no requiere migración; la columna `extra jsonb` ya existe y se usa para `price`). Se mantiene junto al `price` ya existente.
+2. **Etiqueta de porciones**: usar `extra.portionsLabel` si está definido; si no, caer en `${extra.portions} porc.` (mismo orden de prioridad que en `StepDetails`).
 
-3. **Lectura en el wizard del cliente** (`StepDetails.tsx`): si el tamaño tiene `extra.portionsLabel` definido para este pastel, se muestra ese texto; si no, se mantiene el fallback actual `"{portions} porciones"`.
+3. **Precio**: usar `extra.price` si está definido; si no, calcularlo con `product.price * extra.multiplier` (mismo orden que `SizePriceInput` ya muestra como "auto").
 
-4. **Texto vacío = volver al automático.** Borrar el campo elimina `portionsLabel` del `extra` y vuelve a mostrar el cálculo por defecto.
+4. **Si no hay tamaños activos** para el pastel, ocultar la sección entera en lugar de mostrar una tabla vacía.
+
+5. Quitar el import ya innecesario de `SIZES`.
 
 ## Detalles técnicos
 
-- Sin migración SQL.
-- Archivos a modificar:
-  - `src/components/admin/ProductWizardEditor.tsx`: añadir input "Etiqueta de porciones" en `SizePriceInput` y en `ExtraSizePriceInput`; al guardar, fusionar `{ price, portionsLabel }` en `extra` (sin pisar otros campos).
-  - `src/components/customization/steps/StepDetails.tsx`: leer `extra.portionsLabel` antes de caer en `${portions} porciones`.
-- Sin cambios en políticas RLS (las existentes ya cubren `product_wizard_options`).
+- Sin migración ni cambios de datos. Se reutiliza el store existente.
+- Único archivo a tocar: `src/routes/pasteles.$id.index.tsx`.
+- Extraer un helper local pequeño (`function sizeDisplay(opt, basePrice)`) para que el JSX quede limpio.

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Sparkles, Wheat } from "lucide-react";
 import { useProduct, useProductsLoading } from "@/data/products-store";
-import { SIZES } from "@/data/customization";
+import { useResolvedWizardOptions, type ResolvedWizardOption } from "@/data/product-wizard-store";
 
 export const Route = createFileRoute("/pasteles/$id/")({
   head: ({ params }) => ({
@@ -96,20 +96,8 @@ function CakeDetailPage() {
             </div>
           </div>
 
-          <div className="mt-6">
-            <h2 className="font-display text-lg text-foreground">Tamaños y precio orientativo</h2>
-            <ul className="mt-3 divide-y divide-border/60 rounded-2xl bg-card ring-1 ring-border/60">
-              {SIZES.map((s) => (
-                <li key={s.id} className="flex items-center justify-between px-4 py-3 text-sm">
-                  <span className="font-medium text-foreground">{s.label}</span>
-                  <span className="text-muted-foreground">{s.portions} porc.</span>
-                  <span className="font-semibold text-primary">
-                    {(product.price * s.multiplier).toFixed(2)} €
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <ProductSizes productId={product.id} basePrice={product.price} />
+
 
 
           <div className="mt-8">
@@ -126,4 +114,50 @@ function CakeDetailPage() {
       </div>
     </div>
   );
+}
+
+function ProductSizes({ productId, basePrice }: { productId: string; basePrice: number }) {
+  const { options } = useResolvedWizardOptions(productId, "size");
+  if (options.length === 0) return null;
+  return (
+    <div className="mt-6">
+      <h2 className="font-display text-lg text-foreground">Tamaños y precio</h2>
+      <ul className="mt-3 divide-y divide-border/60 rounded-2xl bg-card ring-1 ring-border/60">
+        {options.map((opt) => {
+          const { portions, price } = sizeDisplay(opt, basePrice);
+          return (
+            <li key={opt.key} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+              <span className="font-medium text-foreground">{opt.label}</span>
+              <span className="flex-1 text-right text-muted-foreground sm:text-left">{portions}</span>
+              <span className="font-semibold text-primary">
+                {price !== null ? `${price.toFixed(2)} €` : "—"}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function sizeDisplay(opt: ResolvedWizardOption, basePrice: number): { portions: string; price: number | null } {
+  const extra = opt.extra && typeof opt.extra === "object" && !Array.isArray(opt.extra)
+    ? (opt.extra as Record<string, unknown>)
+    : {};
+  const label = typeof extra.portionsLabel === "string" ? extra.portionsLabel.trim() : "";
+  const portionsNum = extra.portions;
+  const portions = label
+    ? label
+    : portionsNum !== undefined && portionsNum !== null
+      ? `${portionsNum} porc.`
+      : opt.description ?? "";
+
+  let price: number | null = null;
+  if (typeof extra.price === "number" && Number.isFinite(extra.price)) {
+    price = extra.price;
+  } else {
+    const multiplier = Number(extra.multiplier);
+    if (Number.isFinite(multiplier) && multiplier > 0) price = basePrice * multiplier;
+  }
+  return { portions, price };
 }
