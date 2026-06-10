@@ -51,6 +51,8 @@ interface DbProduct {
   tags: string[];
   active: boolean;
   sort_order: number;
+  allergens_info: string | null;
+  delivery_info: string | null;
 }
 
 function mapRow(row: DbProduct): Product {
@@ -64,6 +66,8 @@ function mapRow(row: DbProduct): Product {
     ingredients: row.ingredients ?? [],
     tags: row.tags ?? [],
     active: row.active,
+    allergensInfo: row.allergens_info ?? DEFAULT_ALLERGENS_INFO,
+    deliveryInfo: row.delivery_info ?? DEFAULT_DELIVERY_INFO,
   };
 }
 
