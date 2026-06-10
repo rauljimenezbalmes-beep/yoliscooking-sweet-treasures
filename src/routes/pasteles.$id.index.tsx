@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Sparkles, Wheat } from "lucide-react";
-import { useProduct } from "@/data/products-store";
+import { useProduct, useProductsLoading } from "@/data/products-store";
 import { SIZES, MIN_DELIVERY_DAYS } from "@/data/customization";
 
 export const Route = createFileRoute("/pasteles/$id/")({
@@ -31,6 +31,14 @@ export const Route = createFileRoute("/pasteles/$id/")({
 function CakeDetailPage() {
   const { id } = Route.useParams();
   const product = useProduct(id);
+  const isLoading = useProductsLoading();
+  if (!product && isLoading) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
+        <p className="text-muted-foreground">Cargando pastel…</p>
+      </div>
+    );
+  }
   if (!product) throw notFound();
 
   return (
