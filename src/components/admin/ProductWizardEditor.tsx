@@ -71,15 +71,63 @@ function TypeSection({ productId, type }: { productId: string; type: WizardOptio
   const { data: globals, isLoading: loadingGlobals } = useWizardOptions(type);
   const { data: overrides, isLoading: loadingOverrides } = useProductWizardRows(productId);
   const toggleMut = useToggleGlobalForProduct();
+  const reorderMut = useReorderWizardItems();
   const product = useProduct(productId);
 
-  const overridesForType = (overrides ?? []).filter((o) => o.type === type);
-  const overrideByGlobalId = new Map(
-    overridesForType
-      .filter((o) => o.global_option_id)
-      .map((o) => [o.global_option_id as string, o]),
+  const overridesForType = useMemo(
+    () => (overrides ?? []).filter((o) => o.type === type),
+    [overrides, type],
   );
-  const extras = overridesForType.filter((o) => !o.global_option_id);
+  const overrideByGlobalId = useMemo(
+    () =>
+      new Map(
+        overridesForType
+          .filter((o) => o.global_option_id)
+          .map((o) => [o.global_option_id as string, o]),
+      ),
+    [overridesForType],
+  );
+  const extras = useMemo(
+    () => overridesForType.filter((o) => !o.global_option_id),
+    [overridesForType],
+  );
+
+  type MergedItem =
+    | {
+        kind: "global";
+        key: string;
+        sort: number;
+        global: WizardOption;
+        override?: ProductWizardOption;
+      }
+    | {
+        kind: "extra";
+        key: string;
+        sort: number;
+        extra: ProductWizardOption;
+      };
+
+  const items: MergedItem[] = useMemo(() => {
+    const gItems: MergedItem[] = (globals ?? [])
+      .filter((g) => g.active)
+      .map((g) => {
+        const ov = overrideByGlobalId.get(g.id);
+        return {
+          kind: "global" as const,
+          key: `g:${g.id}`,
+          sort: ov?.sort_order ?? g.sort_order,
+          global: g,
+          override: ov,
+        };
+      });
+    const eItems: MergedItem[] = extras.map((e) => ({
+      kind: "extra" as const,
+      key: `e:${e.id}`,
+      sort: e.sort_order,
+      extra: e,
+    }));
+    return [...gItems, ...eItems].sort((a, b) => a.sort - b.sort);
+  }, [globals, overrideByGlobalId, extras]);
 
   if (loadingGlobals || loadingOverrides) {
     return <p className="text-sm text-muted-foreground">Cargando…</p>;
@@ -88,104 +136,171 @@ function TypeSection({ productId, type }: { productId: string; type: WizardOptio
   const isSizeTab = type === "size";
   const basePrice = product?.price ?? 0;
 
+  async function move(index: number, dir: -1 | 1) {
+    const target = index + dir;
+    if (target < 0 || target >= items.length) return;
+    const next = [...items];
+    [next[index], next[target]] = [next[target], next[index]];
+    const payload: ReorderItem[] = next.map((it) =>
+      it.kind === "global"
+        ? { kind: "global", global: it.global, override: it.override }
+        : { kind: "extra", extra: it.extra },
+    );
+    try {
+      await reorderMut.mutateAsync({ productId, type, items: payload });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error");
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="mb-2 text-sm font-semibold text-foreground">
-          Opciones globales
-        </h3>
-        {isSizeTab && (
-          <p className="mb-3 rounded-xl bg-accent/30 p-3 text-xs text-muted-foreground">
-            Puedes fijar un precio concreto en € para este pastel y tamaño. Si lo dejas vacío,
-            se calculará automáticamente con el precio base ({basePrice.toFixed(2)} €) × multiplicador del tamaño.
-          </p>
-        )}
-        {!globals || globals.length === 0 ? (
-          <p className="rounded-xl bg-muted/40 p-4 text-sm text-muted-foreground">
-            No hay opciones globales en esta categoría. Créalas desde Admin → Wizard.
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {globals
-              .filter((g) => g.active)
-              .map((g) => {
-                const ov = overrideByGlobalId.get(g.id);
-                const enabled = ov ? ov.enabled : true;
-                return (
-                  <li
-                    key={g.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-background p-3 ring-1 ring-border/60"
-                  >
-                    <div className="flex items-center gap-2">
-                      {g.value && g.value.startsWith("#") && (
-                        <span
-                          className="h-6 w-6 shrink-0 rounded-full ring-1 ring-border"
-                          style={{ backgroundColor: g.value }}
-                        />
-                      )}
-                      <span
-                        className={`font-medium ${
-                          enabled ? "text-foreground" : "text-muted-foreground line-through"
-                        }`}
-                      >
-                        {g.label}
-                      </span>
-                      {g.value && (
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                          {g.value}
-                        </span>
-                      )}
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-primary">
-                        Global
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      {isSizeTab && (
-                        <>
-                          <SizePriceInput
-                            productId={productId}
-                            global={g}
-                            existing={ov}
-                            basePrice={basePrice}
-                          />
-                          <SizePortionsLabelInput
-                            productId={productId}
-                            global={g}
-                            existing={ov}
-                          />
-                        </>
-                      )}
-                      <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
-                        <input
-                          type="checkbox"
-                          checked={enabled}
-                          disabled={toggleMut.isPending}
-                          onChange={async (e) => {
-                            try {
-                              await toggleMut.mutateAsync({
-                                productId,
-                                type,
-                                global: g,
-                                enabled: e.target.checked,
-                                existingId: ov?.id,
-                              });
-                            } catch (err) {
-                              toast.error(err instanceof Error ? err.message : "Error");
-                            }
-                          }}
-                          className="h-4 w-4 accent-primary"
-                        />
-                        {enabled ? "Activa" : "Oculta"}
-                      </label>
-                    </div>
-                  </li>
-                );
-              })}
-          </ul>
-        )}
-      </div>
+      {isSizeTab && (
+        <p className="rounded-xl bg-accent/30 p-3 text-xs text-muted-foreground">
+          Puedes fijar un precio concreto en € para este pastel y tamaño. Si lo dejas vacío,
+          se calculará automáticamente con el precio base ({basePrice.toFixed(2)} €) × multiplicador del tamaño.
+        </p>
+      )}
+
+      {items.length === 0 ? (
+        <p className="rounded-xl bg-muted/40 p-4 text-sm text-muted-foreground">
+          No hay opciones en esta categoría. Añade un extra debajo o crea opciones globales en Admin → Wizard.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {items.map((it, idx) => (
+            <li
+              key={it.key}
+              className="flex flex-wrap items-stretch gap-3 rounded-xl bg-background p-3 ring-1 ring-border/60"
+            >
+              <div className="flex flex-col items-center justify-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => move(idx, -1)}
+                  disabled={idx === 0 || reorderMut.isPending}
+                  aria-label="Subir"
+                  className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+                >
+                  <ArrowUp className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(idx, 1)}
+                  disabled={idx === items.length - 1 || reorderMut.isPending}
+                  aria-label="Bajar"
+                  className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+                >
+                  <ArrowDown className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {it.kind === "global" ? (
+                <GlobalRowBody
+                  productId={productId}
+                  type={type}
+                  global={it.global}
+                  override={it.override}
+                  isSizeTab={isSizeTab}
+                  basePrice={basePrice}
+                  toggleMut={toggleMut}
+                />
+              ) : (
+                <ExtraRowBody
+                  row={it.extra}
+                  productId={productId}
+                  showValue={type === "color" || type === "size"}
+                  showDescription={type === "decoration"}
+                  showPrice={type === "size"}
+                />
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <ExtrasManager productId={productId} type={type} extras={extras} />
+    </div>
+  );
+}
+
+function GlobalRowBody({
+  productId,
+  type,
+  global: g,
+  override: ov,
+  isSizeTab,
+  basePrice,
+  toggleMut,
+}: {
+  productId: string;
+  type: WizardOptionType;
+  global: WizardOption;
+  override?: ProductWizardOption;
+  isSizeTab: boolean;
+  basePrice: number;
+  toggleMut: ReturnType<typeof useToggleGlobalForProduct>;
+}) {
+  const enabled = ov ? ov.enabled : true;
+  return (
+    <div className="flex flex-1 flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
+        {g.value && g.value.startsWith("#") && (
+          <span
+            className="h-6 w-6 shrink-0 rounded-full ring-1 ring-border"
+            style={{ backgroundColor: g.value }}
+          />
+        )}
+        <span
+          className={`font-medium ${
+            enabled ? "text-foreground" : "text-muted-foreground line-through"
+          }`}
+        >
+          {g.label}
+        </span>
+        {g.value && (
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+            {g.value}
+          </span>
+        )}
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-primary">
+          Global
+        </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        {isSizeTab && (
+          <>
+            <SizePriceInput
+              productId={productId}
+              global={g}
+              existing={ov}
+              basePrice={basePrice}
+            />
+            <SizePortionsLabelInput productId={productId} global={g} existing={ov} />
+          </>
+        )}
+        <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={enabled}
+            disabled={toggleMut.isPending}
+            onChange={async (e) => {
+              try {
+                await toggleMut.mutateAsync({
+                  productId,
+                  type,
+                  global: g,
+                  enabled: e.target.checked,
+                  existingId: ov?.id,
+                });
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "Error");
+              }
+            }}
+            className="h-4 w-4 accent-primary"
+          />
+          {enabled ? "Activa" : "Oculta"}
+        </label>
+      </div>
     </div>
   );
 }
