@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Sparkles, Wheat } from "lucide-react";
 import { useProduct, useProductsLoading } from "@/data/products-store";
-import { SIZES } from "@/data/customization";
+import { useResolvedWizardOptions, type ResolvedWizardOption } from "@/data/product-wizard-store";
 
 export const Route = createFileRoute("/pasteles/$id/")({
   head: ({ params }) => ({
