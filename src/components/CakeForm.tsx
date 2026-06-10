@@ -49,6 +49,8 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
     setIngredients(product.ingredients);
     setTags(product.tags);
     setActive(product.active);
+    setAllergensInfo(product.allergensInfo);
+    setDeliveryInfo(product.deliveryInfo);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
