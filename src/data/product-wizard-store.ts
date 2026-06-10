@@ -76,7 +76,9 @@ export function useResolvedWizardOptions(
         .map((o) => [o.global_option_id as string, o]),
     );
 
-    const globalResolved: ResolvedWizardOption[] = (globals ?? [])
+    type Sortable = ResolvedWizardOption & { sort: number };
+
+    const globalResolved: Sortable[] = (globals ?? [])
       .filter((g) => g.active && !disabledGlobalIds.has(g.id))
       .map((g) => {
         const ov = overrideByGlobalId.get(g.id);
@@ -97,13 +99,10 @@ export function useResolvedWizardOptions(
           source: "global" as const,
           sort: ov?.sort_order ?? g.sort_order,
         };
-      })
-      .sort((a, b) => a.sort - b.sort)
-      .map(({ sort: _s, ...rest }) => rest);
+      });
 
-    const extras: ResolvedWizardOption[] = overridesForType
+    const extras: Sortable[] = overridesForType
       .filter((o) => !o.global_option_id && o.enabled && o.label)
-      .sort((a, b) => a.sort_order - b.sort_order)
       .map((o) => ({
         key: `e:${o.id}`,
         label: o.label as string,
@@ -111,9 +110,12 @@ export function useResolvedWizardOptions(
         description: o.description,
         extra: o.extra,
         source: "extra" as const,
+        sort: o.sort_order,
       }));
 
-    return [...globalResolved, ...extras];
+    return [...globalResolved, ...extras]
+      .sort((a, b) => a.sort - b.sort)
+      .map(({ sort: _s, ...rest }) => rest);
   }, [globals, overrides, type]);
 
   return { options, isLoading: loadingGlobals || loadingOverrides };
@@ -351,4 +353,61 @@ export function useSetGlobalSizePortionsLabel() {
       qc.invalidateQueries({ queryKey: ["product-wizard", vars.productId] }),
   });
 }
+
+/** Item para reordenar: global activo (con o sin override) o extra. */
+export type ReorderItem =
+  | { kind: "global"; global: WizardOption; override?: ProductWizardOption }
+  | { kind: "extra"; extra: ProductWizardOption };
+
+/**
+ * Persiste un nuevo orden para una lista mezclada (globales activos + extras)
+ * de un pastel y tipo. Reasigna sort_order = índice a todos los items, creando
+ * filas override para los globales que aún no tengan una.
+ */
+export function useReorderWizardItems() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      productId,
+      type,
+      items,
+    }: {
+      productId: string;
+      type: WizardOptionType;
+      items: ReorderItem[];
+    }) => {
+      await Promise.all(
+        items.map(async (it, idx) => {
+          if (it.kind === "extra") {
+            const { error } = await supabase
+              .from("product_wizard_options")
+              .update({ sort_order: idx })
+              .eq("id", it.extra.id);
+            if (error) throw error;
+            return;
+          }
+          if (it.override) {
+            const { error } = await supabase
+              .from("product_wizard_options")
+              .update({ sort_order: idx })
+              .eq("id", it.override.id);
+            if (error) throw error;
+            return;
+          }
+          const { error } = await supabase.from("product_wizard_options").insert({
+            product_id: productId,
+            type,
+            global_option_id: it.global.id,
+            enabled: true,
+            sort_order: idx,
+          });
+          if (error) throw error;
+        }),
+      );
+    },
+    onSuccess: (_d, vars) =>
+      qc.invalidateQueries({ queryKey: ["product-wizard", vars.productId] }),
+  });
+}
+
 
