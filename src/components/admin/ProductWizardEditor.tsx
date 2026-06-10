@@ -11,7 +11,9 @@ import {
   useDeleteProductWizardRow,
   useSetGlobalSizePrice,
   useSetGlobalSizePortionsLabel,
+  useReorderWizardItems,
   type ProductWizardOption,
+  type ReorderItem,
 } from "@/data/product-wizard-store";
 
 const TABS: { type: WizardOptionType; label: string; help: string }[] = [
