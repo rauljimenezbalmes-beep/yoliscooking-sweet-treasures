@@ -118,6 +118,8 @@ export function useUpdateProduct() {
           ...(patch.ingredients !== undefined && { ingredients: patch.ingredients }),
           ...(patch.tags !== undefined && { tags: patch.tags }),
           ...(patch.active !== undefined && { active: patch.active }),
+          ...(patch.allergensInfo !== undefined && { allergens_info: patch.allergensInfo }),
+          ...(patch.deliveryInfo !== undefined && { delivery_info: patch.deliveryInfo }),
         })
         .eq("id", id);
       if (error) throw error;
