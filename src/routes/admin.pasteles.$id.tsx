@@ -37,6 +37,8 @@ const EMPTY_PRODUCT: Product = {
   ingredients: [],
   tags: [],
   active: true,
+  allergensInfo: DEFAULT_ALLERGENS_INFO,
+  deliveryInfo: DEFAULT_DELIVERY_INFO,
 };
 
 function EditarPastel() {
