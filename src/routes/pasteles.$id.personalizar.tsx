@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { useProduct } from "@/data/products-store";
+import { useProduct, useProductsLoading } from "@/data/products-store";
 import { addToCart, updateCartItem, useCart } from "@/data/cart-store";
 import {
   MIN_DELIVERY_DAYS,
