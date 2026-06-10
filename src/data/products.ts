@@ -23,6 +23,8 @@ export interface Product {
   ingredients: string[];
   tags: string[];
   active: boolean;
+  allergensInfo: string;
+  deliveryInfo: string;
 }
 
 export const defaultProducts: Product[] = [
