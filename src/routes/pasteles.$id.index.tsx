@@ -115,3 +115,49 @@ function CakeDetailPage() {
     </div>
   );
 }
+
+function ProductSizes({ productId, basePrice }: { productId: string; basePrice: number }) {
+  const { options } = useResolvedWizardOptions(productId, "size");
+  if (options.length === 0) return null;
+  return (
+    <div className="mt-6">
+      <h2 className="font-display text-lg text-foreground">Tamaños y precio</h2>
+      <ul className="mt-3 divide-y divide-border/60 rounded-2xl bg-card ring-1 ring-border/60">
+        {options.map((opt) => {
+          const { portions, price } = sizeDisplay(opt, basePrice);
+          return (
+            <li key={opt.key} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+              <span className="font-medium text-foreground">{opt.label}</span>
+              <span className="flex-1 text-right text-muted-foreground sm:text-left">{portions}</span>
+              <span className="font-semibold text-primary">
+                {price !== null ? `${price.toFixed(2)} €` : "—"}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function sizeDisplay(opt: ResolvedWizardOption, basePrice: number): { portions: string; price: number | null } {
+  const extra = opt.extra && typeof opt.extra === "object" && !Array.isArray(opt.extra)
+    ? (opt.extra as Record<string, unknown>)
+    : {};
+  const label = typeof extra.portionsLabel === "string" ? extra.portionsLabel.trim() : "";
+  const portionsNum = extra.portions;
+  const portions = label
+    ? label
+    : portionsNum !== undefined && portionsNum !== null
+      ? `${portionsNum} porc.`
+      : opt.description ?? "";
+
+  let price: number | null = null;
+  if (typeof extra.price === "number" && Number.isFinite(extra.price)) {
+    price = extra.price;
+  } else {
+    const multiplier = Number(extra.multiplier);
+    if (Number.isFinite(multiplier) && multiplier > 0) price = basePrice * multiplier;
+  }
+  return { portions, price };
+}
