@@ -142,6 +142,8 @@ export function useCreateProduct() {
         ingredients: product.ingredients,
         tags: product.tags,
         active: product.active,
+        allergens_info: product.allergensInfo,
+        delivery_info: product.deliveryInfo,
         sort_order: 999,
       });
       if (error) throw error;
