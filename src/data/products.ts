@@ -167,4 +167,10 @@ const seedProducts: Omit<Product, "allergensInfo" | "deliveryInfo">[] = [
   },
 ];
 
+export const defaultProducts: Product[] = seedProducts.map((p) => ({
+  ...p,
+  allergensInfo: DEFAULT_ALLERGENS_INFO,
+  deliveryInfo: DEFAULT_DELIVERY_INFO,
+}));
+
 export const categories: Category[] = ["Tartas", "Bizcochos", "Dulces de Temporada"];
