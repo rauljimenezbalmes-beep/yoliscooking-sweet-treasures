@@ -143,7 +143,7 @@ function Home() {
       <section className="mx-auto max-w-5xl px-4 pb-8 sm:px-6">
         <div className="rounded-3xl bg-accent/60 px-8 py-12 text-center ring-1 ring-border/60 sm:px-12">
           <h2 className="font-display text-3xl text-foreground sm:text-4xl">
-            ¿Lista para descubrir tu próxima tarta?
+            ¡Descubre tu proximo pastel!
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
             Explora todo el catálogo de tartas, bizcochos y dulces de temporada de Yoli.
