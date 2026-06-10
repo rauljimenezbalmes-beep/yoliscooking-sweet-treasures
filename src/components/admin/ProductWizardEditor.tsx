@@ -10,6 +10,7 @@ import {
   useUpdateProductExtra,
   useDeleteProductWizardRow,
   useSetGlobalSizePrice,
+  useSetGlobalSizePortionsLabel,
   type ProductWizardOption,
 } from "@/data/product-wizard-store";
 
