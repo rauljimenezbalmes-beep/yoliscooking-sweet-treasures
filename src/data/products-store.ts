@@ -85,6 +85,15 @@ export function useProducts(): Product[] {
   return data ?? [];
 }
 
+export function useProductsLoading(): boolean {
+  const { isLoading } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+    staleTime: 30_000,
+  });
+  return isLoading;
+}
+
 export function useProduct(id: string): Product | undefined {
   const all = useProducts();
   return all.find((p) => p.id === id);
