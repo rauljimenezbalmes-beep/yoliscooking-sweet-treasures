@@ -88,11 +88,19 @@ function PersonalizarRoute() {
 function PersonalizarPage({ editId }: { editId?: string }) {
   const { id } = Route.useParams();
   const product = useProduct(id);
+  const isLoading = useProductsLoading();
   const navigate = useNavigate();
   const { state } = useCustomization();
   const [current, setCurrent] = useState<number>(1);
   const isEditing = !!editId;
 
+  if (!product && isLoading) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6">
+        <p className="text-muted-foreground">Cargando pastel…</p>
+      </div>
+    );
+  }
   if (!product) throw notFound();
 
   const isBizcocho = product.category === "Bizcochos";
