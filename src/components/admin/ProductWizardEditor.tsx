@@ -139,12 +139,19 @@ function TypeSection({ productId, type }: { productId: string; type: WizardOptio
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
                       {isSizeTab && (
-                        <SizePriceInput
-                          productId={productId}
-                          global={g}
-                          existing={ov}
-                          basePrice={basePrice}
-                        />
+                        <>
+                          <SizePriceInput
+                            productId={productId}
+                            global={g}
+                            existing={ov}
+                            basePrice={basePrice}
+                          />
+                          <SizePortionsLabelInput
+                            productId={productId}
+                            global={g}
+                            existing={ov}
+                          />
+                        </>
                       )}
                       <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
                         <input
