@@ -1,30 +1,23 @@
-# Arreglar "Pastel no encontrado" al abrir un producto
+## Objetivo
 
-## Problema
+Dar permisos de administrador al usuario con correo `janet_jimenez_96@hotmail.com`.
 
-Al hacer clic en un pastel, la nueva página muestra "Pastel no encontrado", aunque el producto sí existe.
+## Pasos
 
-**Causa:** en `src/routes/pasteles.$id.index.tsx`, el componente hace:
+1. Verificar que existe un usuario registrado con ese correo en la base de datos (tabla `auth.users`). Si no existe, pedirle a esa persona que se registre primero en la web (`/auth`) antes de continuar.
+2. Insertar una fila en la tabla `user_roles` con ese `user_id` y el rol `admin`, usando `ON CONFLICT DO NOTHING` para que sea seguro re-ejecutarlo.
+3. Confirmar que el usuario ya aparece como admin (al iniciar sesión verá la pestaña "Admin" en la cabecera y podrá entrar a `/admin/pasteles`).
 
-```tsx
-const product = useProduct(id);
-if (!product) throw notFound();
+## Detalles técnicos
+
+SQL aproximado a ejecutar:
+
+```sql
+INSERT INTO public.user_roles (user_id, role)
+SELECT id, 'admin'
+FROM auth.users
+WHERE email = 'janet_jimenez_96@hotmail.com'
+ON CONFLICT (user_id, role) DO NOTHING;
 ```
 
-`useProduct` está basado en React Query y carga los productos de la base de datos de forma asíncrona. En el primer render `product` siempre es `undefined`, así que se lanza `notFound()` antes de que la consulta termine.
-
-## Solución
-
-Distinguir entre "todavía cargando" y "realmente no existe":
-
-1. En `src/data/products-store.ts`, exponer también el estado de carga de la consulta — añadir un hook `useProductsQuery()` (o devolver `{ data, isLoading }`) sin romper `useProducts()` actual.
-2. En `src/routes/pasteles.$id.index.tsx`:
-   - Usar el nuevo hook para saber si los productos aún se están cargando.
-   - Si `isLoading` → mostrar un esqueleto/spinner simple (no lanzar `notFound`).
-   - Si ya cargó y el producto no existe → entonces sí `throw notFound()`.
-3. Revisar `src/routes/pasteles.$id.personalizar.tsx` y aplicar el mismo patrón si hace la misma comprobación.
-4. Asegurar que la ruta tenga `notFoundComponent` (ya existe en `pasteles.$id.index.tsx`).
-
-## Resultado esperado
-
-Al abrir un pastel, la página muestra brevemente un estado de carga y luego el detalle del producto. Solo aparecerá "Pastel no encontrado" si el id realmente no existe.
+No se cambia código ni esquema, solo datos.
