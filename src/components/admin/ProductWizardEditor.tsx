@@ -699,7 +699,7 @@ function ExtraRowBody({
           </>
         )}
       </div>
-    </li>
+    </div>
   );
 }
 
