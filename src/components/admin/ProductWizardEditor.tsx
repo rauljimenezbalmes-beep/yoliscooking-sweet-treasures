@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, X } from "lucide-react";
+import { Plus, Trash2, Save, X, ArrowUp, ArrowDown } from "lucide-react";
 import { useWizardOptions, type WizardOption, type WizardOptionType } from "@/data/wizard-options-store";
 import { useProduct } from "@/data/products-store";
 import {
