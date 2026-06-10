@@ -32,7 +32,7 @@ export const DEFAULT_DELIVERY_INFO = "Mínimo 3 días desde el pedido.";
 
 
 
-export const defaultProducts: Product[] = [
+const seedProducts: Omit<Product, "allergensInfo" | "deliveryInfo">[] = [
   {
     id: "red-velvet",
     name: "Red Velvet",
