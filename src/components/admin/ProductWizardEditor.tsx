@@ -516,7 +516,7 @@ function ExtrasManager({
   );
 }
 
-function ExtraRow({
+function ExtraRowBody({
   row,
   productId,
   showValue,
