@@ -63,6 +63,8 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
       ingredients,
       tags,
       active,
+      allergensInfo: allergensInfo.trim(),
+      deliveryInfo: deliveryInfo.trim(),
     };
     try {
       if (mode === "create") {
