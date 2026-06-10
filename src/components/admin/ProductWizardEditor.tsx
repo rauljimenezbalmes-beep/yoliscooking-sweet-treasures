@@ -256,6 +256,64 @@ function SizePriceInput({
   );
 }
 
+function SizePortionsLabelInput({
+  productId,
+  global,
+  existing,
+}: {
+  productId: string;
+  global: WizardOption;
+  existing?: ProductWizardOption;
+}) {
+  const mut = useSetGlobalSizePortionsLabel();
+  const current =
+    existing?.extra && typeof existing.extra === "object" && !Array.isArray(existing.extra)
+      ? (existing.extra as Record<string, unknown>).portionsLabel
+      : undefined;
+  const initial = typeof current === "string" ? current : "";
+  const [value, setValue] = useState(initial);
+  useEffect(() => {
+    setValue(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existing?.id, current]);
+
+  const globalExtra =
+    global.extra && typeof global.extra === "object" && !Array.isArray(global.extra)
+      ? (global.extra as Record<string, unknown>)
+      : {};
+  const autoPortions = globalExtra.portions;
+  const placeholder = autoPortions ? `auto ${autoPortions} porciones` : "ej. 8-10 personas";
+
+  async function save() {
+    if (value === initial) return;
+    try {
+      await mut.mutateAsync({ productId, global, existing, portionsLabel: value });
+      toast.success(value.trim() ? "Etiqueta guardada" : "Etiqueta automática");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error");
+    }
+  }
+
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={save}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          (e.target as HTMLInputElement).blur();
+        }
+      }}
+      placeholder={placeholder}
+      disabled={mut.isPending}
+      className="w-44 rounded-lg border border-border bg-background px-2.5 py-1 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+    />
+  );
+}
+
+
 function ExtrasManager({
   productId,
   type,
