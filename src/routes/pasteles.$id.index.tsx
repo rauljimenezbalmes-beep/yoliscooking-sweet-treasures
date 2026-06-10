@@ -82,7 +82,7 @@ function CakeDetailPage() {
                 Tiempo de entrega
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                Mínimo {MIN_DELIVERY_DAYS} días desde el pedido.
+                {product.deliveryInfo}
               </p>
             </div>
             <div className="rounded-2xl bg-accent/40 p-4 ring-1 ring-border/60">
@@ -91,7 +91,7 @@ function CakeDetailPage() {
                 Información alérgenos
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                Puede contener: gluten, lácteos, huevo y frutos secos.
+                {product.allergensInfo}
               </p>
             </div>
           </div>
