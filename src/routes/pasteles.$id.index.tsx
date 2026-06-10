@@ -96,20 +96,8 @@ function CakeDetailPage() {
             </div>
           </div>
 
-          <div className="mt-6">
-            <h2 className="font-display text-lg text-foreground">Tamaños y precio orientativo</h2>
-            <ul className="mt-3 divide-y divide-border/60 rounded-2xl bg-card ring-1 ring-border/60">
-              {SIZES.map((s) => (
-                <li key={s.id} className="flex items-center justify-between px-4 py-3 text-sm">
-                  <span className="font-medium text-foreground">{s.label}</span>
-                  <span className="text-muted-foreground">{s.portions} porc.</span>
-                  <span className="font-semibold text-primary">
-                    {(product.price * s.multiplier).toFixed(2)} €
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <ProductSizes productId={product.id} basePrice={product.price} />
+
 
 
           <div className="mt-8">
