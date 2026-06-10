@@ -284,7 +284,6 @@ export function useSetGlobalSizePrice() {
         if (error) throw error;
         return;
       }
-      // No hay override aún → solo creamos si hay precio a guardar.
       if (price === null) return;
       const { error } = await supabase.from("product_wizard_options").insert({
         product_id: productId,
@@ -300,3 +299,56 @@ export function useSetGlobalSizePrice() {
       qc.invalidateQueries({ queryKey: ["product-wizard", vars.productId] }),
   });
 }
+
+/**
+ * Fija (o limpia) la etiqueta de porciones para un tamaño global de un pastel.
+ * Si la fila override no existe y hay etiqueta, la crea con enabled=true.
+ */
+export function useSetGlobalSizePortionsLabel() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      productId,
+      global,
+      existing,
+      portionsLabel,
+    }: {
+      productId: string;
+      global: WizardOption;
+      existing?: ProductWizardOption;
+      portionsLabel: string | null;
+    }) => {
+      const baseExtra =
+        existing?.extra && typeof existing.extra === "object" && !Array.isArray(existing.extra)
+          ? { ...(existing.extra as Record<string, unknown>) }
+          : {};
+      const trimmed = portionsLabel?.trim();
+      if (!trimmed) {
+        delete baseExtra.portionsLabel;
+      } else {
+        baseExtra.portionsLabel = trimmed;
+      }
+      if (existing) {
+        const { error } = await supabase
+          .from("product_wizard_options")
+          .update({ extra: baseExtra as Json })
+          .eq("id", existing.id);
+        if (error) throw error;
+        return;
+      }
+      if (!trimmed) return;
+      const { error } = await supabase.from("product_wizard_options").insert({
+        product_id: productId,
+        type: "size",
+        global_option_id: global.id,
+        enabled: true,
+        sort_order: global.sort_order,
+        extra: baseExtra as Json,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) =>
+      qc.invalidateQueries({ queryKey: ["product-wizard", vars.productId] }),
+  });
+}
+

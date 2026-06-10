@@ -10,6 +10,7 @@ import {
   useUpdateProductExtra,
   useDeleteProductWizardRow,
   useSetGlobalSizePrice,
+  useSetGlobalSizePortionsLabel,
   type ProductWizardOption,
 } from "@/data/product-wizard-store";
 
@@ -138,12 +139,19 @@ function TypeSection({ productId, type }: { productId: string; type: WizardOptio
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
                       {isSizeTab && (
-                        <SizePriceInput
-                          productId={productId}
-                          global={g}
-                          existing={ov}
-                          basePrice={basePrice}
-                        />
+                        <>
+                          <SizePriceInput
+                            productId={productId}
+                            global={g}
+                            existing={ov}
+                            basePrice={basePrice}
+                          />
+                          <SizePortionsLabelInput
+                            productId={productId}
+                            global={g}
+                            existing={ov}
+                          />
+                        </>
                       )}
                       <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
                         <input
@@ -247,6 +255,64 @@ function SizePriceInput({
     </div>
   );
 }
+
+function SizePortionsLabelInput({
+  productId,
+  global,
+  existing,
+}: {
+  productId: string;
+  global: WizardOption;
+  existing?: ProductWizardOption;
+}) {
+  const mut = useSetGlobalSizePortionsLabel();
+  const current =
+    existing?.extra && typeof existing.extra === "object" && !Array.isArray(existing.extra)
+      ? (existing.extra as Record<string, unknown>).portionsLabel
+      : undefined;
+  const initial = typeof current === "string" ? current : "";
+  const [value, setValue] = useState(initial);
+  useEffect(() => {
+    setValue(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existing?.id, current]);
+
+  const globalExtra =
+    global.extra && typeof global.extra === "object" && !Array.isArray(global.extra)
+      ? (global.extra as Record<string, unknown>)
+      : {};
+  const autoPortions = globalExtra.portions;
+  const placeholder = autoPortions ? `auto ${autoPortions} porciones` : "ej. 8-10 personas";
+
+  async function save() {
+    if (value === initial) return;
+    try {
+      await mut.mutateAsync({ productId, global, existing, portionsLabel: value });
+      toast.success(value.trim() ? "Etiqueta guardada" : "Etiqueta automática");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error");
+    }
+  }
+
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={save}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          (e.target as HTMLInputElement).blur();
+        }
+      }}
+      placeholder={placeholder}
+      disabled={mut.isPending}
+      className="w-44 rounded-lg border border-border bg-background px-2.5 py-1 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+    />
+  );
+}
+
 
 function ExtrasManager({
   productId,
@@ -474,7 +540,10 @@ function ExtraRow({
       </div>
 
       {showPrice && !editing && (
-        <ExtraSizePriceInput row={row} productId={productId} />
+        <>
+          <ExtraSizePriceInput row={row} productId={productId} />
+          <ExtraSizePortionsLabelInput row={row} productId={productId} />
+        </>
       )}
 
       <div className="flex items-center gap-1">
@@ -602,3 +671,63 @@ function ExtraSizePriceInput({
     </div>
   );
 }
+
+function ExtraSizePortionsLabelInput({
+  row,
+  productId,
+}: {
+  row: ProductWizardOption;
+  productId: string;
+}) {
+  const updateMut = useUpdateProductExtra();
+  const current =
+    row.extra && typeof row.extra === "object" && !Array.isArray(row.extra)
+      ? (row.extra as Record<string, unknown>).portionsLabel
+      : undefined;
+  const initial = typeof current === "string" ? current : "";
+  const [value, setValue] = useState(initial);
+  useEffect(() => {
+    setValue(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row.id, current]);
+
+  async function save() {
+    if (value === initial) return;
+    const trimmed = value.trim();
+    const baseExtra =
+      row.extra && typeof row.extra === "object" && !Array.isArray(row.extra)
+        ? { ...(row.extra as Record<string, unknown>) }
+        : {};
+    if (!trimmed) delete baseExtra.portionsLabel;
+    else baseExtra.portionsLabel = trimmed;
+    try {
+      await updateMut.mutateAsync({
+        id: row.id,
+        productId,
+        patch: { extra: baseExtra as never },
+      });
+      toast.success(trimmed ? "Etiqueta guardada" : "Etiqueta automática");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error");
+    }
+  }
+
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={save}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          (e.target as HTMLInputElement).blur();
+        }
+      }}
+      placeholder="ej. 8-10 personas"
+      disabled={updateMut.isPending}
+      className="w-44 rounded-lg border border-border bg-background px-2.5 py-1 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+    />
+  );
+}
+

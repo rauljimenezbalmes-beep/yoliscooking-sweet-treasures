@@ -53,13 +53,19 @@ export function StepDetails({ productId }: { productId: string }) {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {sizeOpts.map((opt) => {
               const id = sizeIdOf(opt.label, opt.value);
-              const portions =
+              const extraObj =
                 opt.extra && typeof opt.extra === "object" && !Array.isArray(opt.extra)
-                  ? (opt.extra as Record<string, unknown>).portions
-                  : undefined;
-              const description = portions
-                ? `${portions} porciones`
-                : opt.description ?? undefined;
+                  ? (opt.extra as Record<string, unknown>)
+                  : {};
+              const portionsLabel = typeof extraObj.portionsLabel === "string"
+                ? extraObj.portionsLabel.trim()
+                : "";
+              const portions = extraObj.portions;
+              const description = portionsLabel
+                ? portionsLabel
+                : portions
+                  ? `${portions} porciones`
+                  : opt.description ?? undefined;
               return (
                 <SelectableCard
                   key={opt.key}

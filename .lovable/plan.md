@@ -1,42 +1,25 @@
 ## Objetivo
 
-Que el admin pueda editar, desde el panel de cada pastel (`/admin/pasteles/:id`), dos textos que ahora están fijos en el código:
+Que el admin pueda editar el texto de porciones que ve el cliente al elegir un tamaño de un pastel concreto (ej. cambiar "10 porciones" por "8-10 personas" o "Para una mesa de 12").
 
-- **Información de alérgenos** (ahora siempre dice "Puede contener: gluten, lácteos, huevo y frutos secos").
-- **Tiempo de entrega** (ahora siempre dice "Mínimo 3 días desde el pedido").
+## Estado actual
 
-Cada pastel guarda sus propios valores y se muestran en su ficha pública (`/pasteles/:id`).
+En el paso de tamaño del wizard, debajo de cada tamaño se muestra `"{portions} porciones"` (`src/components/customization/steps/StepDetails.tsx`), donde `portions` sale de `extra.portions` del tamaño global. No es editable por pastel ni se puede personalizar el texto.
 
-## Pasos
+## Cambios
 
-1. **Base de datos** — añadir a la tabla `products` dos columnas nuevas:
-   - `allergens_info text` (texto libre, por defecto el texto actual).
-   - `delivery_info text` (texto libre, por defecto el texto actual).
-   Ambas no nulas con valor por defecto, así los pasteles existentes mantienen lo que se muestra hoy.
+1. **Tab "Tamaños" en `/admin/pasteles/:id`** (`src/components/admin/ProductWizardEditor.tsx`): junto al input de precio, añadir un campo de texto "Etiqueta de porciones" para cada tamaño (tanto los globales como los extras del pastel). Texto libre, opcional.
 
-2. **Modelo de datos en el código**:
-   - Añadir `allergensInfo` y `deliveryInfo` al tipo `Product` (`src/data/products.ts`).
-   - Mapear las nuevas columnas en `src/data/products-store.ts` (lectura, `useUpdateProduct`, `useCreateProduct`).
+2. **Guardado**: el valor va al JSON `extra` de la fila de `product_wizard_options` como `extra.portionsLabel` (no requiere migración; la columna `extra jsonb` ya existe y se usa para `price`). Se mantiene junto al `price` ya existente.
 
-3. **Formulario de admin** (`src/components/CakeForm.tsx`):
-   - Añadir dos campos `<textarea>` ("Información de alérgenos" y "Tiempo de entrega") con el resto de campos.
-   - Incluirlos en el `payload` de guardar/crear.
+3. **Lectura en el wizard del cliente** (`StepDetails.tsx`): si el tamaño tiene `extra.portionsLabel` definido para este pastel, se muestra ese texto; si no, se mantiene el fallback actual `"{portions} porciones"`.
 
-4. **Ficha pública del pastel** (`src/routes/pasteles.$id.index.tsx`):
-   - Sustituir los textos fijos de las dos tarjetas ("Tiempo de entrega" e "Información alérgenos") por `product.deliveryInfo` y `product.allergensInfo`.
-
-5. No se cambia la lógica del wizard de personalización ni la validación de fecha mínima de entrega (sigue siendo `MIN_DELIVERY_DAYS`). El texto editable es solo informativo en la ficha del pastel.
+4. **Texto vacío = volver al automático.** Borrar el campo elimina `portionsLabel` del `extra` y vuelve a mostrar el cálculo por defecto.
 
 ## Detalles técnicos
 
-SQL de la migración:
-
-```sql
-ALTER TABLE public.products
-  ADD COLUMN allergens_info text NOT NULL
-    DEFAULT 'Puede contener: gluten, lácteos, huevo y frutos secos.',
-  ADD COLUMN delivery_info text NOT NULL
-    DEFAULT 'Mínimo 3 días desde el pedido.';
-```
-
-Las políticas RLS existentes ya cubren estas columnas (admin puede `UPDATE`, todos pueden `SELECT`), no hace falta tocarlas.
+- Sin migración SQL.
+- Archivos a modificar:
+  - `src/components/admin/ProductWizardEditor.tsx`: añadir input "Etiqueta de porciones" en `SizePriceInput` y en `ExtraSizePriceInput`; al guardar, fusionar `{ price, portionsLabel }` en `extra` (sin pisar otros campos).
+  - `src/components/customization/steps/StepDetails.tsx`: leer `extra.portionsLabel` antes de caer en `${portions} porciones`.
+- Sin cambios en políticas RLS (las existentes ya cubren `product_wizard_options`).
