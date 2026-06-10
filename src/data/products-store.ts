@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Product, Category } from "./products";
+import { DEFAULT_ALLERGENS_INFO, DEFAULT_DELIVERY_INFO, type Product, type Category } from "./products";
 
 // Static default images for the seeded products so we keep the original assets
 // regardless of what is stored in the DB image column.
