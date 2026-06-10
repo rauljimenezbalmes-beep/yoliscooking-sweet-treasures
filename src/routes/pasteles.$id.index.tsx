@@ -31,6 +31,14 @@ export const Route = createFileRoute("/pasteles/$id/")({
 function CakeDetailPage() {
   const { id } = Route.useParams();
   const product = useProduct(id);
+  const isLoading = useProductsLoading();
+  if (!product && isLoading) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
+        <p className="text-muted-foreground">Cargando pastel…</p>
+      </div>
+    );
+  }
   if (!product) throw notFound();
 
   return (
