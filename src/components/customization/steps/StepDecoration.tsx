@@ -26,11 +26,15 @@ export function StepDecoration({ productId }: { productId: string }) {
 
   function toggleColor(hex: string) {
     const exists = state.colors.includes(hex);
+    if (!exists && state.colors.length >= 2) return;
     update(
       "colors",
       exists ? state.colors.filter((c) => c !== hex) : [...state.colors, hex],
     );
   }
+
+  const colorsSelected = state.colors.length;
+  const colorsComplete = colorsSelected === 2;
 
   return (
     <div className="space-y-8">
@@ -89,7 +93,17 @@ export function StepDecoration({ productId }: { productId: string }) {
 
           {colorOpts.length > 0 && (
             <section>
-              <h3 className="mb-3 font-display text-lg text-foreground">Colores</h3>
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="font-display text-lg text-foreground">Colores</h3>
+                <span className={`text-xs font-medium ${colorsComplete ? "text-emerald-500" : "text-muted-foreground"}`}>
+                  {colorsSelected}/2
+                </span>
+              </div>
+              {!colorsComplete && (
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Selecciona exactamente 2 colores para continuar.
+                </p>
+              )}
               <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
                 {colorOpts.map((opt) => {
                   const hex = opt.value ?? opt.label;
