@@ -34,7 +34,7 @@ export function StepDecoration({ productId }: { productId: string }) {
   }
 
   const colorsSelected = state.colors.length;
-  const colorsComplete = colorsSelected === 2;
+  const colorsComplete = colorsSelected >= 1 && colorsSelected <= 2;
 
   return (
     <div className="space-y-8">
