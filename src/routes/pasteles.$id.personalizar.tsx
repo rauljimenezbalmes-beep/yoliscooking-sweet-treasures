@@ -150,7 +150,9 @@ function PersonalizarPage({ editId }: { editId?: string }) {
           decoOpts.length === 0
             ? true
             : state.decoration !== "" &&
-              (state.decoration !== "personalizada" || state.colors.length > 0),
+              (state.decoration !== "personalizada" ||
+                colorOpts.length === 0 ||
+                state.colors.length === 2),
       });
     }
     list.push({

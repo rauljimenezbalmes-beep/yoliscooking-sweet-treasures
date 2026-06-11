@@ -26,11 +26,15 @@ export function StepDecoration({ productId }: { productId: string }) {
 
   function toggleColor(hex: string) {
     const exists = state.colors.includes(hex);
+    if (!exists && state.colors.length >= 2) return;
     update(
       "colors",
       exists ? state.colors.filter((c) => c !== hex) : [...state.colors, hex],
     );
   }
+
+  const colorsSelected = state.colors.length;
+  const colorsComplete = colorsSelected === 2;
 
   return (
     <div className="space-y-8">
