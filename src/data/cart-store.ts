@@ -132,6 +132,9 @@ export async function addToCart(
   customization: CakeCustomization,
   price: number,
 ): Promise<CartItem> {
+  if ((customization.colors?.length ?? 0) > 2) {
+    throw new Error("Un pastel no puede tener más de 2 colores.");
+  }
   if (currentUserId) {
     const { data, error } = await supabase
       .from("cart_items")
@@ -143,7 +146,10 @@ export async function addToCart(
       })
       .select("id, customization, price, added_at")
       .single();
-    if (!error && data) {
+    if (error) {
+      throw new Error(error.message);
+    }
+    if (data) {
       const item = rowToItem(data as unknown as DbRow);
       state = [...state, item];
       emit();
