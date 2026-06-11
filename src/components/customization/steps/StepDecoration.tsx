@@ -34,7 +34,7 @@ export function StepDecoration({ productId }: { productId: string }) {
   }
 
   const colorsSelected = state.colors.length;
-  const colorsComplete = colorsSelected === 2;
+  const colorsComplete = colorsSelected >= 1 && colorsSelected <= 2;
 
   return (
     <div className="space-y-8">
@@ -96,12 +96,12 @@ export function StepDecoration({ productId }: { productId: string }) {
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="font-display text-lg text-foreground">Colores</h3>
                 <span className={`text-xs font-medium ${colorsComplete ? "text-emerald-500" : "text-muted-foreground"}`}>
-                  {colorsSelected}/2
+                  {colorsSelected}/2 (mín. 1)
                 </span>
               </div>
               {!colorsComplete && (
                 <p className="mb-2 text-xs text-muted-foreground">
-                  Selecciona exactamente 2 colores para continuar.
+                  Selecciona 1 o 2 colores para continuar.
                 </p>
               )}
               <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
