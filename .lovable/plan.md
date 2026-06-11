@@ -1,34 +1,39 @@
+## Backend: limitar a 2 colores por pastel
 
-## Objetivo
+Validar en la base de datos que cada fila de `cart_items` nunca tenga más de 2 colores en `customization.colors`. Una validación a nivel de BD garantiza que ni inserciones directas, ni clientes manipulados, ni código futuro puedan saltarse el límite.
 
-Que el admin pueda ordenar a su gusto las opciones del wizard de cada pastel (tamaños y el resto de categorías), incluyendo tanto las opciones globales activas (Individual, Pequeño, Grande, Extra grande…) como los extras propios del pastel, mezclándolas libremente. El orden elegido es el que verá el cliente en el wizard y en la ficha del pastel.
+### Cambios
 
-## Cambios
+1. **Migración SQL** — crear función + trigger:
 
-### 1. Editor admin (`ProductWizardEditor.tsx`)
+```sql
+create or replace function public.validate_cart_item_colors()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  colors_count int;
+begin
+  if new.customization ? 'colors'
+     and jsonb_typeof(new.customization->'colors') = 'array' then
+    colors_count := jsonb_array_length(new.customization->'colors');
+    if colors_count > 2 then
+      raise exception 'Un pastel no puede tener más de 2 colores (recibidos: %).', colors_count
+        using errcode = 'check_violation';
+    end if;
+  end if;
+  return new;
+end;
+$$;
 
-- En cada pestaña (Sabores, Coberturas, Tamaños…), mostrar una **única lista ordenada** que combine globales activos + extras del pastel, en lugar de las dos secciones separadas actuales.
-- Cada fila lleva un badge `Global` o `Extra` para distinguirlas, y mantiene sus controles actuales (precio/etiqueta de porciones en Tamaños, activar/ocultar, editar/borrar en extras).
-- Añadir a la izquierda de cada fila dos botones de orden: `↑` y `↓` (deshabilitados en los extremos). Al pulsar, se intercambia el `sort_order` con el vecino dentro de la misma pestaña.
-- Debajo de la lista se mantiene el formulario para crear un nuevo extra. Los extras nuevos se añaden al final.
+create trigger cart_items_validate_colors
+before insert or update on public.cart_items
+for each row execute function public.validate_cart_item_colors();
+```
 
-### 2. Persistencia del orden
+2. **Frontend (`src/data/cart-store.ts`)** — manejo defensivo: en `addToCart` y `updateCartItem`, si Supabase devuelve un error del trigger, lanzar/propagar para que el caller muestre un toast (en vez de continuar silenciosamente al fallback local). El límite de 2 ya se aplica en `StepDecoration.tsx`, así que esto es una red de seguridad.
 
-- **Extras** (`product_wizard_options` sin `global_option_id`): actualizar `sort_order` con el `useUpdateProductExtra` ya existente.
-- **Globales**: el `sort_order` se guarda en la fila override de `product_wizard_options`. Si no existe override para ese global, se crea con `enabled: true` y el nuevo `sort_order` (mismo patrón que `useSetGlobalSizePrice`).
-- Añadir un mutation `useSetWizardSortOrder({ productId, type, global?, existing?, extraId?, sort_order })` que cubre ambos casos.
-- El intercambio se hace en dos `update`/`insert` (uno por cada vecino), invalidando la query `["product-wizard", productId]` al final.
-
-### 3. Cálculo del orden vigente
-
-- En el editor, construir la lista combinada con la misma lógica que `useResolvedWizardOptions` (override.sort_order si hay, si no global.sort_order para globales; sort_order propio para extras) y ordenarla. Sobre esa lista se pintan las flechas y se decide el sort_order vecino para los swaps.
-- `useResolvedWizardOptions` ya ordena por `sort` para globales y por `sort_order` para extras, pero los concatena (globales y luego extras). Se modifica para **mezclar ambos en una única ordenación** por su sort efectivo, de modo que el orden del admin se respete tal cual en el cliente y en `pasteles/$id` (que ya consume este hook).
-
-## Detalles técnicos
-
-- Sin cambios de esquema: `product_wizard_options.sort_order` ya existe.
-- Archivos afectados:
-  - `src/components/admin/ProductWizardEditor.tsx` (UI unificada + botones de orden).
-  - `src/data/product-wizard-store.ts` (nuevo `useSetWizardSortOrder`; resolver mezcla globales y extras en una única ordenación).
-- Sin migración de datos: los `sort_order` actuales de globales y extras siguen siendo válidos como punto de partida; el admin reordena cuando lo necesite.
-- Para evitar empates de `sort_order` entre globales y extras, al cargar la lista en el editor se reasignan visualmente índices 1..N y los swaps escriben valores enteros consecutivos, garantizando un orden determinista.
+### No se toca
+- Esquema de `cart_items` (sigue siendo JSONB).
+- Lógica del wizard ni el resto del flujo de personalización.

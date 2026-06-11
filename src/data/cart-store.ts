@@ -132,6 +132,9 @@ export async function addToCart(
   customization: CakeCustomization,
   price: number,
 ): Promise<CartItem> {
+  if ((customization.colors?.length ?? 0) > 2) {
+    throw new Error("Un pastel no puede tener más de 2 colores.");
+  }
   if (currentUserId) {
     const { data, error } = await supabase
       .from("cart_items")
@@ -143,7 +146,10 @@ export async function addToCart(
       })
       .select("id, customization, price, added_at")
       .single();
-    if (!error && data) {
+    if (error) {
+      throw new Error(error.message);
+    }
+    if (data) {
       const item = rowToItem(data as unknown as DbRow);
       state = [...state, item];
       emit();
@@ -174,14 +180,23 @@ export async function updateCartItem(
   customization: CakeCustomization,
   price: number,
 ) {
+  if ((customization.colors?.length ?? 0) > 2) {
+    throw new Error("Un pastel no puede tener más de 2 colores.");
+  }
+  const prev = state;
   state = state.map((i) => (i.id === id ? { ...i, customization, price } : i));
   emit();
   if (currentUserId && isUuid(id)) {
-    await supabase
+    const { error } = await supabase
       .from("cart_items")
       .update({ customization: customization as unknown as never, price })
       .eq("id", id)
       .eq("user_id", currentUserId);
+    if (error) {
+      state = prev;
+      emit();
+      throw new Error(error.message);
+    }
   }
 }
 
