@@ -52,6 +52,7 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
     setActive(product.active);
     setAllergensInfo(product.allergensInfo);
     setDeliveryInfo(product.deliveryInfo);
+    setMaxFlavors(product.maxFlavors ?? 2);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
