@@ -307,6 +307,28 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
               className="w-full resize-none rounded-xl border border-border bg-background px-4 py-2.5 text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/20"
             />
           </Field>
+
+          <Field label="Sabores que puede elegir el cliente">
+            <div className="flex gap-2">
+              {([1, 2] as const).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setMaxFlavors(n)}
+                  className={`flex-1 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
+                    maxFlavors === n
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border bg-background text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {n === 1 ? "Solo 1 sabor" : "Hasta 2 sabores"}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Limita cuántos sabores puede combinar el cliente al personalizar este pastel.
+            </p>
+          </Field>
         </div>
       </div>
     </form>
