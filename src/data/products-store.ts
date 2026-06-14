@@ -53,9 +53,11 @@ interface DbProduct {
   sort_order: number;
   allergens_info: string | null;
   delivery_info: string | null;
+  max_flavors: number | null;
 }
 
 function mapRow(row: DbProduct): Product {
+  const mf = row.max_flavors === 1 ? 1 : 2;
   return {
     id: row.id,
     name: row.name,
@@ -68,6 +70,7 @@ function mapRow(row: DbProduct): Product {
     active: row.active,
     allergensInfo: row.allergens_info ?? DEFAULT_ALLERGENS_INFO,
     deliveryInfo: row.delivery_info ?? DEFAULT_DELIVERY_INFO,
+    maxFlavors: mf,
   };
 }
 
