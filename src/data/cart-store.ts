@@ -128,6 +128,21 @@ function isUuid(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 }
 
+async function assertMaxFlavors(customization: CakeCustomization) {
+  const count = customization.flavors?.length ?? 0;
+  if (count === 0) return;
+  const { data, error } = await supabase
+    .from("products")
+    .select("max_flavors")
+    .eq("id", customization.productId)
+    .maybeSingle();
+  if (error) return;
+  const max = data?.max_flavors === 1 ? 1 : 2;
+  if (count > max) {
+    throw new Error(`Este pastel permite como máximo ${max} sabor${max === 1 ? "" : "es"}.`);
+  }
+}
+
 export async function addToCart(
   customization: CakeCustomization,
   price: number,
