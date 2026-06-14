@@ -123,6 +123,7 @@ export function useUpdateProduct() {
           ...(patch.active !== undefined && { active: patch.active }),
           ...(patch.allergensInfo !== undefined && { allergens_info: patch.allergensInfo }),
           ...(patch.deliveryInfo !== undefined && { delivery_info: patch.deliveryInfo }),
+          ...(patch.maxFlavors !== undefined && { max_flavors: patch.maxFlavors }),
         })
         .eq("id", id);
       if (error) throw error;
