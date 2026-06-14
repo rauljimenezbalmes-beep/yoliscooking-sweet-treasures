@@ -36,6 +36,7 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
   const [active, setActive] = useState(product.active);
   const [allergensInfo, setAllergensInfo] = useState(product.allergensInfo);
   const [deliveryInfo, setDeliveryInfo] = useState(product.deliveryInfo);
+  const [maxFlavors, setMaxFlavors] = useState<1 | 2>(product.maxFlavors ?? 2);
   const [newIngredient, setNewIngredient] = useState("");
   const [newTag, setNewTag] = useState("");
   const [saved, setSaved] = useState(false);
