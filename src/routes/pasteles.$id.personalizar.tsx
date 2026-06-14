@@ -126,11 +126,12 @@ function PersonalizarPage({ editId }: { editId?: string }) {
   const steps = useMemo<BuiltStep[]>(() => {
     const list: BuiltStep[] = [];
     if (flavorOpts.length > 0) {
+      const maxFlavors = product.maxFlavors ?? 2;
       list.push({
         key: "flavors",
         label: "Sabores",
         render: () => <StepFlavors productId={product.id} />,
-        valid: state.flavors.length >= 1,
+        valid: state.flavors.length >= 1 && state.flavors.length <= maxFlavors,
       });
     }
     if (coveringOpts.length > 0) {
