@@ -48,12 +48,12 @@ export function CustomizationProvider({
     setState((prev) => ({ ...prev, [key]: value }));
   }
 
-  function toggleFlavor(f: string) {
+  function toggleFlavor(f: string, max: number = 2) {
     setState((prev) => {
       if (prev.flavors.includes(f)) {
         return { ...prev, flavors: prev.flavors.filter((x) => x !== f) };
       }
-      if (prev.flavors.length >= 2) return prev;
+      if (prev.flavors.length >= max) return prev;
       return { ...prev, flavors: [...prev.flavors, f] };
     });
   }
