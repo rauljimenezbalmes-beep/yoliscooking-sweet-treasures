@@ -115,6 +115,7 @@ export type Database = {
           id: string
           image: string
           ingredients: string[]
+          max_flavors: number
           name: string
           price: number
           sort_order: number
@@ -131,6 +132,7 @@ export type Database = {
           id: string
           image?: string
           ingredients?: string[]
+          max_flavors?: number
           name: string
           price?: number
           sort_order?: number
@@ -147,6 +149,7 @@ export type Database = {
           id?: string
           image?: string
           ingredients?: string[]
+          max_flavors?: number
           name?: string
           price?: number
           sort_order?: number
