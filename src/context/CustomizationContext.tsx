@@ -30,7 +30,7 @@ const DEFAULT_STATE: CustomizationState = {
 interface Ctx {
   state: CustomizationState;
   update: <K extends keyof CustomizationState>(key: K, value: CustomizationState[K]) => void;
-  toggleFlavor: (f: string) => void;
+  toggleFlavor: (f: string, max?: number) => void;
 }
 
 const CustomizationCtx = createContext<Ctx | null>(null);
