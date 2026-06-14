@@ -53,9 +53,11 @@ interface DbProduct {
   sort_order: number;
   allergens_info: string | null;
   delivery_info: string | null;
+  max_flavors: number | null;
 }
 
 function mapRow(row: DbProduct): Product {
+  const mf = row.max_flavors === 1 ? 1 : 2;
   return {
     id: row.id,
     name: row.name,
@@ -68,6 +70,7 @@ function mapRow(row: DbProduct): Product {
     active: row.active,
     allergensInfo: row.allergens_info ?? DEFAULT_ALLERGENS_INFO,
     deliveryInfo: row.delivery_info ?? DEFAULT_DELIVERY_INFO,
+    maxFlavors: mf,
   };
 }
 
@@ -120,6 +123,7 @@ export function useUpdateProduct() {
           ...(patch.active !== undefined && { active: patch.active }),
           ...(patch.allergensInfo !== undefined && { allergens_info: patch.allergensInfo }),
           ...(patch.deliveryInfo !== undefined && { delivery_info: patch.deliveryInfo }),
+          ...(patch.maxFlavors !== undefined && { max_flavors: patch.maxFlavors }),
         })
         .eq("id", id);
       if (error) throw error;
@@ -144,6 +148,7 @@ export function useCreateProduct() {
         active: product.active,
         allergens_info: product.allergensInfo,
         delivery_info: product.deliveryInfo,
+        max_flavors: product.maxFlavors ?? 2,
         sort_order: 999,
       });
       if (error) throw error;

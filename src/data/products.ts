@@ -25,6 +25,7 @@ export interface Product {
   active: boolean;
   allergensInfo: string;
   deliveryInfo: string;
+  maxFlavors?: 1 | 2;
 }
 
 export const DEFAULT_ALLERGENS_INFO = "Puede contener: gluten, lácteos, huevo y frutos secos.";

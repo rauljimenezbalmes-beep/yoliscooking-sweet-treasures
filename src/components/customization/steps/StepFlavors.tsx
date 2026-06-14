@@ -1,21 +1,26 @@
 import { useCustomization } from "@/context/CustomizationContext";
 import { useResolvedWizardLabels } from "@/data/product-wizard-store";
+import { useProduct } from "@/data/products-store";
 import { SelectableCard } from "../SelectableCard";
 
 export function StepFlavors({ productId }: { productId: string }) {
   const { state, toggleFlavor } = useCustomization();
   const flavors = useResolvedWizardLabels(productId, "flavor");
+  const product = useProduct(productId);
+  const maxFlavors: 1 | 2 = product?.maxFlavors ?? 2;
   const selectedCount = state.flavors.length;
-  const maxReached = selectedCount >= 2;
+  const maxReached = selectedCount >= maxFlavors;
 
   return (
     <div>
       <header className="mb-6">
         <h2 className="font-display text-2xl text-foreground sm:text-3xl">
-          Elige uno o dos sabores
+          {maxFlavors === 1 ? "Elige un sabor" : "Elige uno o dos sabores"}
         </h2>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          Selecciona hasta 2 sabores para el interior de tu pastel.
+          {maxFlavors === 1
+            ? "Selecciona el sabor para el interior de tu pastel."
+            : "Selecciona hasta 2 sabores para el interior de tu pastel."}
         </p>
       </header>
 
@@ -34,7 +39,7 @@ export function StepFlavors({ productId }: { productId: string }) {
                 label={f}
                 selected={selected}
                 disabled={disabled}
-                onClick={() => toggleFlavor(f)}
+                onClick={() => toggleFlavor(f, maxFlavors)}
               />
             );
           })}
@@ -42,7 +47,7 @@ export function StepFlavors({ productId }: { productId: string }) {
       )}
 
       <p className="mt-4 text-xs text-muted-foreground">
-        <span className="font-semibold text-foreground">{selectedCount}/2</span> sabores seleccionados
+        <span className="font-semibold text-foreground">{selectedCount}/{maxFlavors}</span> {maxFlavors === 1 ? "sabor seleccionado" : "sabores seleccionados"}
       </p>
     </div>
   );

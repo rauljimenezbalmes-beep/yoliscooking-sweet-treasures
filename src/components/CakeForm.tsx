@@ -36,6 +36,7 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
   const [active, setActive] = useState(product.active);
   const [allergensInfo, setAllergensInfo] = useState(product.allergensInfo);
   const [deliveryInfo, setDeliveryInfo] = useState(product.deliveryInfo);
+  const [maxFlavors, setMaxFlavors] = useState<1 | 2>(product.maxFlavors ?? 2);
   const [newIngredient, setNewIngredient] = useState("");
   const [newTag, setNewTag] = useState("");
   const [saved, setSaved] = useState(false);
@@ -51,6 +52,7 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
     setActive(product.active);
     setAllergensInfo(product.allergensInfo);
     setDeliveryInfo(product.deliveryInfo);
+    setMaxFlavors(product.maxFlavors ?? 2);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
@@ -67,6 +69,7 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
       active,
       allergensInfo: allergensInfo.trim(),
       deliveryInfo: deliveryInfo.trim(),
+      maxFlavors,
     };
     try {
       if (mode === "create") {
@@ -303,6 +306,28 @@ export function CakeForm({ product, mode = "edit" }: CakeFormProps) {
               placeholder="Ej. Mínimo 3 días desde el pedido."
               className="w-full resize-none rounded-xl border border-border bg-background px-4 py-2.5 text-foreground outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/20"
             />
+          </Field>
+
+          <Field label="Sabores que puede elegir el cliente">
+            <div className="flex gap-2">
+              {([1, 2] as const).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setMaxFlavors(n)}
+                  className={`flex-1 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors ${
+                    maxFlavors === n
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border bg-background text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {n === 1 ? "Solo 1 sabor" : "Hasta 2 sabores"}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Limita cuántos sabores puede combinar el cliente al personalizar este pastel.
+            </p>
           </Field>
         </div>
       </div>
