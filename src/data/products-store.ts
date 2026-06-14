@@ -148,6 +148,7 @@ export function useCreateProduct() {
         active: product.active,
         allergens_info: product.allergensInfo,
         delivery_info: product.deliveryInfo,
+        max_flavors: product.maxFlavors ?? 2,
         sort_order: 999,
       });
       if (error) throw error;
