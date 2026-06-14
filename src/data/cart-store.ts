@@ -199,6 +199,7 @@ export async function updateCartItem(
   if ((customization.colors?.length ?? 0) > 2) {
     throw new Error("Un pastel no puede tener más de 2 colores.");
   }
+  await assertMaxFlavors(customization);
   const prev = state;
   state = state.map((i) => (i.id === id ? { ...i, customization, price } : i));
   emit();
