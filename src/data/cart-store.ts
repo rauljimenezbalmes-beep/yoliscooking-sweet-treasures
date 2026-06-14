@@ -135,6 +135,7 @@ export async function addToCart(
   if ((customization.colors?.length ?? 0) > 2) {
     throw new Error("Un pastel no puede tener más de 2 colores.");
   }
+  await assertMaxFlavors(customization);
   if (currentUserId) {
     const { data, error } = await supabase
       .from("cart_items")
