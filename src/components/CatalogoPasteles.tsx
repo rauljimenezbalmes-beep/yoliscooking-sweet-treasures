@@ -30,6 +30,11 @@ export function CatalogoPasteles({
 }: CatalogoPasteleProps) {
   const products = useProducts();
   const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const toggleExpand = (cat: string) => {
+    setExpanded((prev) => ({ ...prev, [cat]: !prev[cat] }));
+  };
 
   const filteredByCategory = useMemo(() => {
     const q = query.trim().toLowerCase();
