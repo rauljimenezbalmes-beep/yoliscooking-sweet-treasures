@@ -1,9 +1,20 @@
-Limitar el catálogo para mostrar solo los 4 primeros productos de cada categoría inicialmente, y añadir un botón "Ver más productos" junto a cada título de categoría que expanda para mostrar el resto.
+Mostrar "+10 €" en el botón "Decoración personalizada" en el wizard de personalización, y asegurar que el recargo aplicado al precio sea 10 € (no 8 €) para todas las tartas actuales y futuras que tengan esa opción.
 
-Cambios en `src/components/CatalogoPasteles.tsx`:
+## Cambios
 
-- Añadir estado local con `useState<Record<string, boolean>>` para rastrear qué categorías están expandidas.
-- Por cada categoría, renderizar únicamente los primeros 4 productos si la categoría no está expandida; si está expandida, mostrar todos.
-- Modificar el encabezado de cada categoría para incluir, alineado a la derecha del título, un botón pequeño con estilo outline que diga "Ver más productos". Usar `flex items-center justify-between` en la fila del título.
-- El botón actualiza el estado local para expandir la categoría correspondiente. Una vez expandida, el botón puede desaparecer o cambiar a "Ver menos"; mostrar solo "Ver más productos" y ocultarlo cuando todo esté visible es suficiente.
-- El botón no necesita navegar ni tocar la base de datos: es puro comportamiento de UI local.
+### 1. `src/data/customization.ts`
+- Cambiar `CUSTOM_DECORATION_FEE = 8` → `CUSTOM_DECORATION_FEE = 10`.
+- Esto afecta a `computePrice` y `resolveWizardPrice`, que ya se usan en el resumen del wizard y al añadir/actualizar el carrito, por lo que el recargo pasa a 10 € automáticamente en todas las tartas (actuales y futuras) sin tocar la base de datos.
+
+### 2. `src/components/customization/steps/StepDecoration.tsx`
+- En el `map` de `decoOpts`, detectar si la opción es "personalizada" (misma lógica ya existente: `opt.label.toLowerCase().includes("personal")`).
+- Pasar una nueva prop `badge="+10 €"` (o similar) al `SelectableCard` correspondiente, para que se vea el recargo directamente en el botón, junto al título "Decoración personalizada".
+
+### 3. `src/components/customization/SelectableCard.tsx`
+- Añadir una prop opcional `badge?: string`.
+- Si está presente, renderizar un pequeño chip/etiqueta en la esquina superior derecha de la tarjeta (estilo `rounded-full border border-primary/30 bg-primary/10 text-primary text-xs px-2 py-0.5`) para no romper el layout actual.
+
+## Notas
+
+- No se toca la base de datos: las opciones del wizard siguen viniendo de `product_wizard_options`, y la etiqueta "+10 €" se calcula en el frontend a partir de la constante `CUSTOM_DECORATION_FEE`, así que cualquier tarta futura que tenga la opción "personalizada" mostrará el badge automáticamente.
+- Si más adelante quieres que el importe sea configurable por tarta desde el admin, sería un cambio aparte (nuevo campo en `product_wizard_options.extra`).
