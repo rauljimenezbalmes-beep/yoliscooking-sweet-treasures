@@ -1,6 +1,8 @@
 import { useCustomization } from "@/context/CustomizationContext";
 import { useResolvedWizardOptions } from "@/data/product-wizard-store";
+import { CUSTOM_DECORATION_FEE } from "@/data/customization";
 import { SelectableCard } from "../SelectableCard";
+
 
 export function StepDecoration({ productId }: { productId: string }) {
   const { state, update } = useCustomization();
