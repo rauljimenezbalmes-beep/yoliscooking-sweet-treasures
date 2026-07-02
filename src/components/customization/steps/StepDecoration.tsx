@@ -1,6 +1,8 @@
 import { useCustomization } from "@/context/CustomizationContext";
 import { useResolvedWizardOptions } from "@/data/product-wizard-store";
+import { CUSTOM_DECORATION_FEE } from "@/data/customization";
 import { SelectableCard } from "../SelectableCard";
+
 
 export function StepDecoration({ productId }: { productId: string }) {
   const { state, update } = useCustomization();
@@ -56,14 +58,14 @@ export function StepDecoration({ productId }: { productId: string }) {
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {decoOpts.map((opt) => {
-              const norm = opt.label.toLowerCase().includes("personal")
-                ? "personalizada"
-                : "clasica";
+              const isPersonal = opt.label.toLowerCase().includes("personal");
+              const norm = isPersonal ? "personalizada" : "clasica";
               return (
                 <SelectableCard
                   key={opt.key}
                   label={opt.label}
                   description={opt.description ?? undefined}
+                  badge={isPersonal ? `+${CUSTOM_DECORATION_FEE} €` : undefined}
                   selected={state.decoration === norm}
                   onClick={() => pickDecoration(opt.label)}
                 />

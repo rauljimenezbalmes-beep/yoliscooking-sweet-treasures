@@ -60,7 +60,7 @@ export const SIZES: SizeOption[] = [
   { id: "xl", label: "Extra grande", portions: 24, multiplier: 3 },
 ];
 
-export const CUSTOM_DECORATION_FEE = 8;
+export const CUSTOM_DECORATION_FEE = 10;
 export const MIN_DELIVERY_DAYS = 3;
 
 export type DecorationType = "clasica" | "personalizada";

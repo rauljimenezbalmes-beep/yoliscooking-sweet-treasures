@@ -6,10 +6,11 @@ interface Props {
   description?: string;
   selected: boolean;
   disabled?: boolean;
+  badge?: string;
   onClick: () => void;
 }
 
-export function SelectableCard({ label, description, selected, disabled, onClick }: Props) {
+export function SelectableCard({ label, description, selected, disabled, badge, onClick }: Props) {
   return (
     <button
       type="button"
@@ -36,10 +37,18 @@ export function SelectableCard({ label, description, selected, disabled, onClick
       >
         <Check className="h-3.5 w-3.5" strokeWidth={3} />
       </span>
-      <span className="font-display text-base text-foreground sm:text-lg">{label}</span>
+      <span className="flex flex-wrap items-center gap-2">
+        <span className="font-display text-base text-foreground sm:text-lg">{label}</span>
+        {badge && (
+          <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+            {badge}
+          </span>
+        )}
+      </span>
       {description && (
         <span className="text-xs text-muted-foreground">{description}</span>
       )}
     </button>
   );
 }
+
