@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { categories, type Category, type Product } from "@/data/products";
 import { useProducts } from "@/data/products-store";
 import { ProductCard } from "@/components/ProductCard";
@@ -30,6 +30,11 @@ export function CatalogoPasteles({
 }: CatalogoPasteleProps) {
   const products = useProducts();
   const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const toggleExpand = (cat: string) => {
+    setExpanded((prev) => ({ ...prev, [cat]: !prev[cat] }));
+  };
 
   const filteredByCategory = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -133,12 +138,26 @@ export function CatalogoPasteles({
                   </h3>
                   <div className="mt-2 h-1 w-16 rounded-full bg-primary/50" />
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  {items.length} {items.length === 1 ? "creación" : "creaciones"}
-                </span>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-muted-foreground">
+                    {items.length} {items.length === 1 ? "creación" : "creaciones"}
+                  </span>
+                  {items.length > 4 && (
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(cat)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-all hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    >
+                      {expanded[cat] ? "Ver menos" : "Ver más productos"}
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${expanded[cat] ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {items.map((p) => (
+                {items.slice(0, expanded[cat] ? items.length : 4).map((p) => (
                   <ProductCard key={p.id} product={p} />
                 ))}
               </div>
