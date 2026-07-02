@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { categories, type Category, type Product } from "@/data/products";
 import { useProducts } from "@/data/products-store";
 import { ProductCard } from "@/components/ProductCard";
