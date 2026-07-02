@@ -29,14 +29,6 @@ export function StepDetails({ productId }: { productId: string }) {
   return (
     <div className="space-y-8">
       <section>
-        <header className="mb-4">
-          <h2 className="font-display text-2xl text-foreground sm:text-3xl">
-            Texto en el pastel
-          </h2>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            Mensaje o dedicatoria que aparecerá en la decoración (opcional).
-          </p>
-        </header>
         <input
           type="text"
           value={state.customText}
